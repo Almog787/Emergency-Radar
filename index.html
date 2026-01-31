@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>VOXEL WARFARE - INFINITE MAP</title>
+    <title>VOXEL WARFARE - COMPACT CITY</title>
     <style>
         body { margin: 0; overflow: hidden; background: #020617; font-family: 'Segoe UI', sans-serif; }
         #ui {
@@ -35,8 +35,8 @@
 <body>
 
     <div id="ui">
-        <h1 style="margin:0; font-size: 22px; letter-spacing: 1px;">VOXEL WARFARE: INFINITE</h1>
-        <div id="status">> מפה: ענקית | התחדשות מבנים: פעילה</div>
+        <h1 style="margin:0; font-size: 22px; letter-spacing: 1px;">VOXEL WARFARE: COMPACT</h1>
+        <div id="status">> מפה: בינונית | התחדשות מבנים: פעילה</div>
     </div>
 
     <div id="controls">
@@ -46,7 +46,7 @@
         <div class="btn" onmousedown="moveCam('right')">▶</div>
     </div>
 
-    <div id="instructions">השתמש בחצים כדי לסייר במפה הענקית | לחץ לירי | מבנים יבנו את עצמם מחדש</div>
+    <div id="instructions">השתמש בחצים כדי לסייר | לחץ לירי | מבנים יבנו את עצמם מחדש</div>
     <button class="btn-audio" id="audioBtn" onclick="initAudio()">טען מערכות סאונד</button>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -118,15 +118,16 @@
             }
         }
 
-        /** 2. אתחול עולם ענק **/
+        /** 2. אתחול עולם קומפקטי **/
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x020617);
-        scene.fog = new THREE.Fog(0x020617, 200, 1200); // ערפל רחוק יותר למפה גדולה
+        // הקטנת טווח הערפל כדי להתאים לגודל החדש
+        scene.fog = new THREE.Fog(0x020617, 100, 700); 
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 3000);
         let camAngle = 0.8;
-        let camHeight = 150;
-        let camRadius = 500;
+        let camHeight = 120;
+        let camRadius = 300; // רדיוס מצלמה התחלתי קטן יותר
         
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -137,10 +138,10 @@
         sun.position.set(200, 500, 200);
         scene.add(sun);
 
-        // רשת ענקית
-        scene.add(new THREE.GridHelper(3000, 150, 0x1e293b, 0x0f172a));
+        // רשת מותאמת לגודל החדש
+        scene.add(new THREE.GridHelper(1500, 75, 0x1e293b, 0x0f172a));
 
-        /** 3. בניית עיר מסיבית **/
+        /** 3. בניית עיר מרוכזת **/
         const buildings = [];
         let debris = [];
         const voxelGeo = new THREE.BoxGeometry(1.9, 1.9, 1.9);
@@ -171,7 +172,6 @@
             group.position.set(x, 0, z);
             scene.add(group);
             
-            // שמירת נתונים לשיקום עתידי
             return { 
                 group, 
                 voxels, 
@@ -181,24 +181,24 @@
         }
 
         function createCity() {
-            // יצירת 200 בניינים!
-            for (let i = 0; i < 200; i++) {
-                const bx = (Math.random() - 0.5) * 1200;
-                const bz = (Math.random() - 0.5) * 1200;
-                const bh = Math.floor(Math.random() * 15) + 5; // גובה
-                const bw = Math.floor(Math.random() * 3) + 2;  // רוחב
+            // הקטנת כמות הבניינים ל-80
+            for (let i = 0; i < 80; i++) {
+                // הקטנת שטח הפיזור ל-600 (במקום 1200)
+                const bx = (Math.random() - 0.5) * 600;
+                const bz = (Math.random() - 0.5) * 600;
+                const bh = Math.floor(Math.random() * 15) + 5; 
+                const bw = Math.floor(Math.random() * 3) + 2;
                 
-                // מרחק מינימלי מהמרכז כדי לא לחסום
-                if (Math.abs(bx) < 50 && Math.abs(bz) < 50) continue;
+                if (Math.abs(bx) < 30 && Math.abs(bz) < 30) continue;
 
                 buildings.push(buildStructure(bx, bz, bw, bh));
             }
         }
         createCity();
 
-        /** 4. מנגנון התחדשות (Regeneration) **/
+        /** 4. מנגנון התחדשות **/
         function scheduleRegeneration(building) {
-            const delay = 5000 + Math.random() * 10000; // 5 עד 15 שניות
+            const delay = 5000 + Math.random() * 10000;
             setTimeout(() => {
                 rebuildBuilding(building);
             }, delay);
@@ -206,15 +206,9 @@
 
         function rebuildBuilding(building) {
             if (!building.destroyed) return;
-
             playSound('rebuild');
+            while(building.group.children.length > 0){ building.group.remove(building.group.children[0]); }
 
-            // ניקוי הקבוצה הישנה (למקרה שנשאר משהו)
-            while(building.group.children.length > 0){ 
-                building.group.remove(building.group.children[0]); 
-            }
-
-            // יצירה מחדש של הווקסלים
             const { w, h } = building.config;
             building.voxels = [];
 
@@ -229,18 +223,14 @@
                         });
                         const v = new THREE.Mesh(voxelGeo, mat);
                         v.position.set(ix*2, y*2 + 1, iz*2);
-                        
-                        // התחלה בקנה מידה 0 לאנימציית צמיחה
                         v.scale.set(0,0,0);
-                        
                         building.group.add(v);
                         building.voxels.push(v);
 
-                        // אנימציית צמיחה
                         gsap.to(v.scale, {
                             x: 1, y: 1, z: 1,
                             duration: 0.5,
-                            delay: y * 0.1, // אפקט מדורג לפי גובה
+                            delay: y * 0.1,
                             ease: "back.out(1.7)"
                         });
                     }
@@ -249,18 +239,17 @@
             building.destroyed = false;
         }
 
-
         /** 5. שליטת מצלמה **/
         function moveCam(dir) {
             if (dir === 'left') camAngle += 0.2;
             if (dir === 'right') camAngle -= 0.2;
             if (dir === 'up') {
-                camHeight = Math.min(camHeight + 50, 600);
-                camRadius = Math.min(camRadius + 50, 1000);
+                camHeight = Math.min(camHeight + 30, 400);
+                camRadius = Math.min(camRadius + 30, 800);
             }
             if (dir === 'down') {
-                camHeight = Math.max(camHeight - 50, 50);
-                camRadius = Math.max(camRadius - 50, 200);
+                camHeight = Math.max(camHeight - 30, 50);
+                camRadius = Math.max(camRadius - 30, 150);
             }
         }
 
@@ -279,7 +268,6 @@
             if (intersects.length > 0) {
                 const target = intersects[0].point;
                 let hitB = null;
-                // חיפוש חכם של הבניין שנפגע
                 buildings.forEach(b => {
                     if (b.group === intersects[0].object.parent || b.group === intersects[0].object) hitB = b;
                 });
@@ -298,7 +286,6 @@
             trail.position.z = 4;
             shell.add(head); shell.add(trail);
             
-            // יורה ממיקום המצלמה (לכאורה)
             shell.position.set(camera.position.x, camera.position.y - 20, camera.position.z);
             scene.add(shell);
             shell.lookAt(target);
@@ -326,7 +313,7 @@
                 building.voxels.forEach((v) => {
                     const worldPos = new THREE.Vector3();
                     v.getWorldPosition(worldPos);
-                    scene.attach(v); // ניתוק מהבניין למרחב העולם
+                    scene.attach(v);
                     
                     const angle = Math.random() * Math.PI * 2;
                     const force = 3 + Math.random() * 5;
@@ -338,38 +325,33 @@
                     v.material.emissiveIntensity = 3;
                     gsap.to(v.material.color, { r: 0.1, g: 0.1, b: 0.1, duration: 2 });
                 });
-                
-                // תזמון התחדשות
                 scheduleRegeneration(building);
             }
 
             gsap.fromTo(camera.position, { x: camera.position.x + 5 }, { x: camera.position.x, duration: 0.1, ease: "elastic.out" });
         }
 
-        /** 7. לולאת אנימציה **/
+        /** 7. אנימציה **/
         function animate() {
             requestAnimationFrame(animate);
             
-            // תנועת מצלמה חלקה
             const targetX = Math.cos(camAngle) * camRadius;
             const targetZ = Math.sin(camAngle) * camRadius;
             camera.position.lerp(new THREE.Vector3(targetX, camHeight, targetZ), 0.05);
             camera.lookAt(0, 0, 0);
 
-            // פיזיקת רסיסים וניקוי
             for (let i = debris.length - 1; i >= 0; i--) {
                 const v = debris[i];
                 if (v.userData.active) {
                     v.position.add(v.userData.velocity);
-                    v.userData.velocity.y -= 0.3; // כבידה
-                    v.userData.velocity.multiplyScalar(0.97); // חיכוך אוויר
+                    v.userData.velocity.y -= 0.3;
+                    v.userData.velocity.multiplyScalar(0.97);
 
                     if (v.position.y < 1) {
                         v.position.y = 1;
                         v.userData.velocity.set(0,0,0);
                         v.userData.active = false;
                         
-                        // ניקוי אוטומטי של רסיסים ישנים כדי לא לחנוק את הזיכרון
                         if (debris.length > 2000) {
                             scene.remove(v);
                             debris.splice(i, 1);
@@ -377,7 +359,6 @@
                     }
                 }
             }
-
             renderer.render(scene, camera);
         }
 

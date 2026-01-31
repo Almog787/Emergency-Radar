@@ -2,223 +2,266 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>VOXEL ENGINE - REALISTIC TEXTURES</title>
+    <title>ARTILLERY SIMULATOR - PRO VFX</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #0f172a; font-family: 'Segoe UI', sans-serif; }
-        #ui {
-            position: absolute; top: 20px; left: 20px; color: #e2e8f0;
-            pointer-events: none; z-index: 10; background: rgba(15, 23, 42, 0.85);
-            padding: 20px; border-radius: 15px; border: 1px solid #1e293b;
-            backdrop-filter: blur(5px);
-        }
-        #controls {
-            position: absolute; bottom: 30px; left: 30px; display: grid;
-            grid-template-columns: 60px 60px 60px; gap: 10px; z-index: 100;
-        }
-        .btn {
-            width: 60px; height: 60px; background: rgba(30, 41, 59, 0.8); color: #94a3b8;
-            border: 1px solid #334155; border-radius: 10px; cursor: pointer;
-            display: flex; justify-content: center; align-items: center; font-weight: bold;
-            font-size: 20px; user-select: none; transition: 0.2s;
-        }
-        .btn:active { background: #94a3b8; color: #1e293b; }
-        .btn-audio {
-            position: absolute; top: 20px; right: 20px; background: #0ea5e9;
-            color: white; border: none; padding: 15px 30px; cursor: pointer;
-            border-radius: 50px; font-weight: bold; z-index: 100;
-        }
-        #instructions { position: absolute; bottom: 20px; width: 100%; text-align: center; color: #64748b; }
+        body { margin: 0; overflow: hidden; background: #020617; font-family: 'Segoe UI', sans-serif; }
+        #loading { position: absolute; inset: 0; background: #020617; color: #38bdf8; display: flex; justify-content: center; align-items: center; z-index: 1000; font-size: 24px; }
+        #crosshair { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; border: 2px solid rgba(0, 210, 255, 0.5); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+        .btn-audio { position: absolute; top: 20px; right: 20px; background: #0ea5e9; color: white; border: none; padding: 15px 30px; cursor: pointer; border-radius: 50px; font-weight: bold; z-index: 100; box-shadow: 0 0 20px rgba(14, 165, 233, 0.5); }
     </style>
 </head>
 <body>
 
-    <div id="ui">
-        <h1 style="margin:0; font-size: 22px;">REALISTIC DESTRUCTION</h1>
-        <div id="status">> RENDERER: TEXTURE_MAPPED | PHYSICS: ACTIVE</div>
-    </div>
+    <div id="loading">טוען מערכות פיזיקה ו-VFX...</div>
+    <div id="crosshair"></div>
+    <button class="btn-audio" id="audioBtn" onclick="initAudio()">הפעל מערכת סאונד</button>
 
-    <div id="controls">
-        <div></div><div class="btn" onmousedown="moveCam('up')">▲</div><div></div>
-        <div class="btn" onmousedown="moveCam('left')">◀</div>
-        <div class="btn" onmousedown="moveCam('down')">▼</div>
-        <div class="btn" onmousedown="moveCam('right')">▶</div>
-    </div>
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+        import * as CANNON from 'https://cdn.skypack.dev/cannon-es@0.19.0';
+        import * as dat from 'https://cdn.skypack.dev/dat.gui@0.7.9';
+        import gsap from 'https://cdn.skypack.dev/gsap';
 
-    <div id="instructions">השתמש בחצים לניווט | לחץ על בניין להשמדה</div>
-    <button class="btn-audio" id="audioBtn" onclick="initAudio()">הפעל סאונד</button>
+        // --- ניהול סאונד מתקדם ---
+        let audioCtx;
+        window.initAudio = () => {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            document.getElementById('audioBtn').style.display = 'none';
+        };
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+        function playComplexSound(type) {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const master = audioCtx.createGain();
+            master.connect(audioCtx.destination);
 
-    <script>
-        /** 1. מנוע סאונד **/
-        let audioCtx = null;
-        function initAudio() { /* ... קוד סאונד נשאר זהה ... */ }
-        function playSound(type) { /* ... קוד סאונד נשאר זהה ... */ }
+            if (type === 'launch') {
+                const osc = audioCtx.createOscillator();
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.2);
+                const g = audioCtx.createGain();
+                g.gain.setValueAtTime(0.4, now);
+                g.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.connect(g); g.connect(master);
+                osc.start(); osc.stop(now + 0.3);
+            } else if (type === 'whistle') {
+                const osc = audioCtx.createOscillator();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(1000, now);
+                osc.frequency.exponentialRampToValueAtTime(200, now + 0.8);
+                const g = audioCtx.createGain();
+                g.gain.setValueAtTime(0, now);
+                g.gain.linearRampToValueAtTime(0.1, now + 0.1);
+                g.gain.linearRampToValueAtTime(0, now + 0.8);
+                osc.connect(g); g.connect(master);
+                osc.start(); osc.stop(now + 0.8);
+            } else if (type === 'explode') {
+                // רעש לבן בשכבות לפיצוץ עמוק
+                const bufferSize = audioCtx.sampleRate * 2;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(1000, now);
+                filter.frequency.exponentialRampToValueAtTime(40, now + 0.8);
+                const g = audioCtx.createGain();
+                g.gain.setValueAtTime(1, now);
+                g.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
+                noise.connect(filter); filter.connect(g); g.connect(master);
+                noise.start();
+            }
+        }
 
-        /** 2. אתחול עולם עם טקסטורות **/
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0f172a);
-        scene.fog = new THREE.Fog(0x0f172a, 200, 800);
+        // --- אתחול מנוע ---
+        let scene, camera, renderer, controls, world;
+        const objectsToUpdate = [];
+        const params = { gravity: -9.82, explosionForce: 25, explosionRadius: 12 };
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 3000);
-        let camAngle = 1, camHeight = 100, camRadius = 350;
-        
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+        init();
+        animate();
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-        const sun = new THREE.DirectionalLight(0xffffff, 1);
-        sun.position.set(200, 400, 200);
-        scene.add(sun);
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x020617);
+            scene.fog = new THREE.Fog(0x020617, 20, 150);
 
-        // קרקע משקפת
-        const ground = new THREE.Mesh(
-            new THREE.PlaneGeometry(2000, 2000),
-            new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.2, metalness: 0.8 })
-        );
-        ground.rotation.x = -Math.PI / 2;
-        scene.add(ground);
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(50, 40, 50);
 
-        /** 3. בניית עיר עם טקסטורות **/
-        let buildings = []; // חשוב: לא const כי נעדכן את המערך
-        const debris = [];
-        
-        // טוען טקסטורות
-        const textureLoader = new THREE.TextureLoader();
-        const textureUrls = [
-            'https://threejs.org/examples/textures/brick_diffuse.jpg',
-            'https://threejs.org/examples/textures/carbon/Carbon.png',
-            'https://threejs.org/examples/textures/water.jpg'
-        ];
-        
-        // טעינה מראש של הטקסטורות
-        const textures = textureUrls.map(url => textureLoader.load(url));
+            world = new CANNON.World();
+            world.gravity.set(0, params.gravity, 0);
+            world.allowSleep = true;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.body.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambient);
+            const sun = new THREE.DirectionalLight(0xffffff, 1);
+            sun.position.set(50, 100, 50);
+            sun.castShadow = true;
+            scene.add(sun);
+
+            // קרקע
+            const floorGeo = new THREE.PlaneGeometry(300, 300);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x0f172a });
+            const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+            floorMesh.rotation.x = -Math.PI / 2;
+            floorMesh.receiveShadow = true;
+            scene.add(floorMesh);
+
+            const floorBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
+            floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+            world.addBody(floorBody);
+
+            createCity();
+            
+            const gui = new dat.GUI();
+            gui.add(params, 'explosionForce', 10, 100).name("עוצמת פיצוץ");
+            gui.add(params, 'explosionRadius', 5, 30).name("רדיוס נזק");
+
+            document.getElementById('loading').style.display = 'none';
+            window.addEventListener('mousedown', onShoot);
+        }
 
         function createCity() {
-            for (let i = 0; i < 40; i++) {
-                const bx = (Math.random() - 0.5) * 500;
-                const bz = (Math.random() - 0.5) * 500;
-                const bh = Math.floor(Math.random() * 80) + 40;
-                const bw = Math.floor(Math.random() * 10) + 10;
-
-                const geo = new THREE.BoxGeometry(bw, bh, bw);
+            const voxelGeo = new THREE.BoxGeometry(2, 2, 2);
+            const voxelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+            
+            for (let i = 0; i < 12; i++) {
+                const bx = (Math.random() - 0.5) * 60;
+                const bz = (Math.random() - 0.5) * 60;
+                const h = 5 + Math.floor(Math.random() * 5);
                 
-                // בחירת טקסטורה אקראית
-                const texture = textures[i % textures.length];
-                // מיפוי UV חכם: גורם לטקסטורה לחזור על עצמה במקום להימתח
-                texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-                texture.repeat.set(1, Math.round(bh / bw)); // חוזרת על עצמה אנכית
+                for (let y = 0; y < h; y++) {
+                    const pos = { x: bx, y: y * 2.1 + 1, z: bz };
+                    const mesh = new THREE.Mesh(voxelGeo, voxelMat.clone());
+                    mesh.position.set(pos.x, pos.y, pos.z);
+                    mesh.castShadow = true;
+                    scene.add(mesh);
 
-                const mat = new THREE.MeshStandardMaterial({
-                    map: texture,
-                    roughness: 0.5,
-                    metalness: 0.2
+                    const shape = new CANNON.Box(new CANNON.Vec3(1, 1, 1));
+                    const body = new CANNON.Body({ mass: 1, position: new CANNON.Vec3(pos.x, pos.y, pos.z) });
+                    body.addShape(shape);
+                    body.sleep();
+                    world.addBody(body);
+                    objectsToUpdate.push({ mesh, body });
+                }
+            }
+        }
+
+        function onShoot(e) {
+            if (e.button !== 0) return;
+            playComplexSound('launch');
+            playComplexSound('whistle');
+
+            // יצירת פגז (טיל)
+            const shellGroup = new THREE.Group();
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.6), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+            const glow = new THREE.PointLight(0x0ea5e9, 2, 10);
+            shellGroup.add(head);
+            shellGroup.add(glow);
+            
+            shellGroup.position.copy(camera.position);
+            scene.add(shellGroup);
+
+            const body = new CANNON.Body({ mass: 5, shape: new CANNON.Sphere(0.6), position: new CANNON.Vec3(camera.position.x, camera.position.y, camera.position.z) });
+            const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).multiplyScalar(60);
+            body.velocity.set(dir.x, dir.y, dir.z);
+            world.addBody(body);
+
+            const trailInterval = setInterval(() => {
+                const smoke = new THREE.Mesh(new THREE.SphereGeometry(0.3), new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.5 }));
+                smoke.position.copy(shellGroup.position);
+                scene.add(smoke);
+                gsap.to(smoke.scale, { x: 0, y: 0, z: 0, duration: 0.5, onComplete: () => scene.remove(smoke) });
+            }, 30);
+
+            const shellData = { mesh: shellGroup, body };
+            objectsToUpdate.push(shellData);
+
+            body.addEventListener('collide', (event) => {
+                clearInterval(trailInterval);
+                createAdvancedExplosion(event.contact.bj.position);
+                world.removeBody(body);
+                scene.remove(shellGroup);
+                objectsToUpdate.splice(objectsToUpdate.indexOf(shellData), 1);
+            });
+        }
+
+        function createAdvancedExplosion(pos) {
+            playComplexSound('explode');
+
+            // 1. פלאש אור
+            const light = new THREE.PointLight(0xffaa00, 50, 40);
+            light.position.copy(pos);
+            scene.add(light);
+            gsap.to(light, { intensity: 0, duration: 0.8, onComplete: () => scene.remove(light) });
+
+            // 2. גל הדף (Shockwave)
+            const ring = new THREE.Mesh(
+                new THREE.RingGeometry(1, 1.5, 32),
+                new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, side: THREE.DoubleSide })
+            );
+            ring.position.copy(pos);
+            ring.rotation.x = -Math.PI / 2;
+            scene.add(ring);
+            gsap.to(ring.scale, { x: params.explosionRadius, y: params.explosionRadius, duration: 0.6, ease: "expo.out" });
+            gsap.to(ring.material, { opacity: 0, duration: 0.6, onComplete: () => scene.remove(ring) });
+
+            // 3. כדור אש (Particles)
+            for (let i = 0; i < 15; i++) {
+                const fire = new THREE.Mesh(new THREE.SphereGeometry(2), new THREE.MeshBasicMaterial({ color: 0xff4400, transparent: true }));
+                fire.position.copy(pos);
+                scene.add(fire);
+                gsap.to(fire.position, { 
+                    x: pos.x + (Math.random()-0.5)*10, 
+                    y: pos.y + Math.random()*10, 
+                    z: pos.z + (Math.random()-0.5)*10, 
+                    duration: 1 
                 });
-
-                const building = new THREE.Mesh(geo, mat);
-                building.position.set(bx, bh / 2, bz);
-                
-                scene.add(building);
-                buildings.push(building);
+                gsap.to(fire.scale, { x: 0, y: 0, z: 0, duration: 1 });
+                gsap.to(fire.material, { opacity: 0, duration: 1, onComplete: () => scene.remove(fire) });
             }
-        }
-        createCity();
 
-        /** 4. מנגנון התחדשות **/
-        function scheduleRegeneration(config) {
-            setTimeout(() => {
-                rebuildBuilding(config);
-            }, 8000 + Math.random() * 10000);
-        }
-
-        function rebuildBuilding(config) {
-            // בונה מחדש בניין שנהרס
-            const { x, z, w, h } = config;
-            const geo = new THREE.BoxGeometry(w, h, w);
-            const texture = textures[Math.floor(Math.random() * textures.length)];
-            texture.repeat.set(1, Math.round(h / w));
-
-            const mat = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.5, metalness: 0.2 });
-            const building = new THREE.Mesh(geo, mat);
-            building.position.set(x, h / 2, z);
-            
-            // אנימציית בנייה
-            building.scale.set(0, 0, 0);
-            scene.add(building);
-            buildings.push(building);
-            
-            gsap.to(building.scale, { x: 1, y: 1, z: 1, duration: 1, ease: "expo.out" });
+            // 4. פיזיקה לרסיסים
+            objectsToUpdate.forEach(obj => {
+                const dist = obj.body.position.distanceTo(pos);
+                if (dist < params.explosionRadius) {
+                    obj.body.wakeUp();
+                    const forceDir = new CANNON.Vec3().copy(obj.body.position).vsub(pos);
+                    forceDir.normalize();
+                    const strength = (1 - dist / params.explosionRadius) * params.explosionForce;
+                    obj.body.applyImpulse(forceDir.scale(strength), obj.body.position);
+                    
+                    // אפקט חריכה ויזואלי לרסיסים שנפגעו
+                    if (obj.mesh.material) {
+                        obj.mesh.material.emissive.setHex(0xff3300);
+                        gsap.to(obj.mesh.material.emissive, { r: 0, g: 0, b: 0, duration: 2 });
+                    }
+                }
+            });
         }
 
-        /** 5. שליטת מצלמה וירי **/
-        function moveCam(dir) { /* ... קוד נשאר זהה ... */ }
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-
-        window.addEventListener('mousedown', (e) => {
-            if (e.target.className.includes('btn')) return;
-            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
-            
-            // ירי רק על המבנים
-            const intersects = raycaster.intersectObjects(buildings);
-            
-            if (intersects.length > 0) {
-                const hitBuilding = intersects[0].object;
-                launch(intersects[0].point, hitBuilding);
-            }
-        });
-
-        function launch(target, building) {
-            // ... (קוד שיגור נשאר זהה)
-            detonate(target, building); // פיצוץ מיידי לצורך הדגמה
-        }
-
-        function detonate(pos, building) {
-            if (!building || building.destroyed) return;
-            building.destroyed = true;
-
-            // שמירת נתונים לשיקום
-            const config = {
-                x: building.position.x,
-                z: building.position.z,
-                w: building.geometry.parameters.width,
-                h: building.geometry.parameters.height
-            };
-
-            // הסרת הבניין מהמערכת
-            scene.remove(building);
-            buildings = buildings.filter(b => b !== building);
-
-            // יצירת רסיסים מהטקסטורה של הבניין
-            const debrisGeo = new THREE.BoxGeometry(3, 3, 3);
-            for (let i = 0; i < 30; i++) {
-                // כל רסיס מקבל את החומר של הבניין המקורי
-                const v = new THREE.Mesh(debrisGeo, building.material);
-                v.position.copy(pos);
-                scene.add(v);
-
-                const angle = Math.random() * Math.PI * 2;
-                v.userData.velocity = new THREE.Vector3(Math.cos(angle)*5, 5+Math.random()*8, Math.sin(angle)*5);
-                debris.push(v);
-            }
-            
-            scheduleRegeneration(config);
-            // ... (קוד סאונד ופלאש)
-        }
-
-        /** 6. אנימציה **/
         function animate() {
             requestAnimationFrame(animate);
-            // ... (קוד מצלמה ופיזיקת רסיסים נשאר זהה)
+            world.step(1/60);
+            objectsToUpdate.forEach(obj => {
+                obj.mesh.position.copy(obj.body.position);
+                obj.mesh.quaternion.copy(obj.body.quaternion);
+            });
+            controls.update();
             renderer.render(scene, camera);
         }
-        
-        // ... (כל שאר הקוד נשאר זהה)
-        animate();
     </script>
 </body>
 </html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מטח ארטילרי תלת-ממדי</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
+        #ui {
+            position: absolute; top: 20px; left: 20px; color: white;
+            pointer-events: none; text-shadow: 2px 2px 4px #000;
+        }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <h1>מערכת ארטילריה אקטיבית</h1>
+        <p>לחץ על המבנים כדי להפגיז אותם</p>
+    </div>
+
+    <!-- ספריות חיצוניות -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+
+    <script>
+        // --- הגדרות בסיסיות ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050508);
+        scene.fog = new THREE.Fog(0x050508, 20, 100);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        // תאורה
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+        scene.add(ambientLight);
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1);
+        sunLight.position.set(10, 50, 10);
+        sunLight.castShadow = true;
+        scene.add(sunLight);
+
+        // קרקע
+        const groundGeo = new THREE.PlaneGeometry(200, 200);
+        const groundMat = new THREE.MeshPhongMaterial({ color: 0x111111 });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // --- יצירת עיר ---
+        const buildings = [];
+        function createCity() {
+            const bGeo = new THREE.BoxGeometry(1, 1, 1);
+            for (let i = 0; i < 40; i++) {
+                const h = Math.random() * 5 + 2;
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0x444455,
+                    emissive: 0x111122
+                });
+                const b = new THREE.Mesh(bGeo, material);
+                b.scale.set(2, h, 2);
+                b.position.set(Math.random() * 40 - 20, h/2, Math.random() * 40 - 20);
+                b.castShadow = true;
+                b.receiveShadow = true;
+                b.userData.isBuilding = true;
+                b.userData.health = 100;
+                scene.add(b);
+                buildings.push(b);
+            }
+        }
+        createCity();
+
+        camera.position.set(0, 15, 30);
+        camera.lookAt(0, 0, 0);
+
+        // --- מערכת חלקיקים לפיצוץ ---
+        const particles = [];
+        function createExplosion(pos) {
+            const particleCount = 100;
+            const geo = new THREE.SphereGeometry(0.1, 8, 8);
+            
+            for (let i = 0; i < particleCount; i++) {
+                const mat = new THREE.MeshBasicMaterial({ 
+                    color: Math.random() > 0.5 ? 0xff4500 : 0xffd700 
+                });
+                const p = new THREE.Mesh(geo, mat);
+                p.position.copy(pos);
+                
+                // וקטור כיוון אקראי לפיצוץ
+                const velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.5,
+                    Math.random() * 0.5,
+                    (Math.random() - 0.5) * 0.5
+                );
+                
+                particles.push({ mesh: p, vel: velocity, life: 1.0 });
+                scene.add(p);
+            }
+        }
+
+        // --- ירי ארטילרי ---
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        window.addEventListener('mousedown', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(buildings);
+
+            if (intersects.length > 0) {
+                const target = intersects[0].object;
+                const targetPos = intersects[0].point;
+                launchProjectile(targetPos, target);
+            }
+        });
+
+        function launchProjectile(targetPos, targetBuilding) {
+            const projectile = new THREE.Mesh(
+                new THREE.SphereGeometry(0.3, 8, 8),
+                new THREE.MeshBasicMaterial({ color: 0xffffff })
+            );
+            const startPos = new THREE.Vector3(-30, 0, 30); // נקודת יציאה של הארטילריה
+            projectile.position.copy(startPos);
+            scene.add(projectile);
+
+            // אנימציית מעוף עם GSAP (קשת בליסטית)
+            gsap.to(projectile.position, {
+                x: targetPos.x,
+                z: targetPos.z,
+                duration: 1,
+                ease: "none",
+                onComplete: () => {
+                    scene.remove(projectile);
+                    impact(targetPos, targetBuilding);
+                }
+            });
+            // גובה הקשת
+            gsap.to(projectile.position, {
+                y: targetPos.y + 10,
+                duration: 0.5,
+                ease: "power2.out",
+                yoyo: true,
+                repeat: 1
+            });
+        }
+
+        function impact(pos, building) {
+            createExplosion(pos);
+            
+            // זעזוע מצלמה
+            gsap.to(camera.position, {
+                x: camera.position.x + (Math.random() - 0.5) * 2,
+                y: camera.position.y + (Math.random() - 0.5) * 2,
+                duration: 0.1,
+                yoyo: true,
+                repeat: 3
+            });
+
+            // הרס מבנה
+            if (building.userData.health > 0) {
+                building.userData.health -= 50;
+                gsap.to(building.scale, { y: building.scale.y * 0.5, duration: 0.5 });
+                gsap.to(building.position, { y: building.position.y - building.scale.y * 0.25, duration: 0.5 });
+                building.material.color.setHex(0x222222);
+            }
+        }
+
+        // --- לולאת רנדר ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // עדכון חלקיקים
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.mesh.position.add(p.vel);
+                p.vel.y -= 0.01; // כוח כבידה לחלקיקים
+                p.life -= 0.02;
+                p.mesh.scale.setScalar(p.life);
+                
+                if (p.life <= 0) {
+                    scene.remove(p.mesh);
+                    particles.splice(i, 1);
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

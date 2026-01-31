@@ -1,0 +1,16 @@
+{
+  "environment": {
+    "skyColor": "#0f172a",
+    "gridColor": "#38bdf8",
+    "groundColor": "#0f172a",
+    "gravity": -0.5
+  },
+  "buildings": [
+    { "x": -25, "z": -15, "h": 8, "type": "skyscraper" },
+    { "x": 20, "z": 10, "h": 12, "type": "tower" },
+    { "x": 0, "z": 25, "h": 6, "type": "bunker" },
+    { "x": -15, "z": 20, "h": 10, "type": "tower" },
+    { "x": 30, "z": -20, "h": 7, "type": "skyscraper" },
+    { "x": 5, "z": -10, "h": 15, "type": "monolith" }
+  ]
+}

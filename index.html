@@ -2,266 +2,115 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>ARTILLERY SIMULATOR - PRO VFX</title>
+    <title>סימולטור סידור עבודה - רכבת קלה</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #020617; font-family: 'Segoe UI', sans-serif; }
-        #loading { position: absolute; inset: 0; background: #020617; color: #38bdf8; display: flex; justify-content: center; align-items: center; z-index: 1000; font-size: 24px; }
-        #crosshair { position: absolute; top: 50%; left: 50%; width: 30px; height: 30px; border: 2px solid rgba(0, 210, 255, 0.5); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
-        .btn-audio { position: absolute; top: 20px; right: 20px; background: #0ea5e9; color: white; border: none; padding: 15px 30px; cursor: pointer; border-radius: 50px; font-weight: bold; z-index: 100; box-shadow: 0 0 20px rgba(14, 165, 233, 0.5); }
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&display=swap');
+        body { font-family: 'Heebo', sans-serif; }
+        .shift-card:hover { transform: translateY(-2px); transition: 0.2s; }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 p-8">
 
-    <div id="loading">טוען מערכות פיזיקה ו-VFX...</div>
-    <div id="crosshair"></div>
-    <button class="btn-audio" id="audioBtn" onclick="initAudio()">הפעל מערכת סאונד</button>
+    <div class="max-w-7xl mx-auto">
+        <header class="flex justify-between items-center mb-8 bg-white p-6 rounded-xl shadow-sm">
+            <div>
+                <h1 class="text-3xl font-bold text-blue-900">מערכת בקרה ושיבוץ - הקו האדום</h1>
+                <p class="text-gray-500">סימולציה של 34 תחנות | 15 בקרים | משימות חודשיות</p>
+            </div>
+            <button onclick="generateSchedule()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-bold transition">
+                ייצר סידור עבודה שבועי
+            </button>
+        </header>
 
-    <script type="module">
-        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
-        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
-        import * as CANNON from 'https://cdn.skypack.dev/cannon-es@0.19.0';
-        import * as dat from 'https://cdn.skypack.dev/dat.gui@0.7.9';
-        import gsap from 'https://cdn.skypack.dev/gsap';
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-4 rounded-lg shadow-sm border-r-4 border-blue-500">
+                <div class="text-sm text-gray-500">סה"כ תחנות</div>
+                <div class="text-2xl font-bold">34</div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-sm border-r-4 border-green-500">
+                <div class="text-sm text-gray-500">בקרים פעילים</div>
+                <div class="text-2xl font-bold">15</div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-sm border-r-4 border-yellow-500">
+                <div class="text-sm text-gray-500">משימות לביצוע החודש</div>
+                <div class="text-2xl font-bold">136</div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-sm border-r-4 border-red-500">
+                <div class="text-sm text-gray-500">יעד שעות חודשי</div>
+                <div class="text-2xl font-bold">2,000</div>
+            </div>
+        </div>
 
-        // --- ניהול סאונד מתקדם ---
-        let audioCtx;
-        window.initAudio = () => {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            document.getElementById('audioBtn').style.display = 'none';
-        };
+        <!-- Schedule Table -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <table class="w-full text-right">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="p-4">יום</th>
+                        <th class="p-4">בקר</th>
+                        <th class="p-4">שעות</th>
+                        <th class="p-4">משימה / תחנה</th>
+                        <th class="p-4">סטטוס חריגה</th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleBody" class="divide-y divide-gray-100">
+                    <!-- Data injected here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-        function playComplexSound(type) {
-            if (!audioCtx) return;
-            const now = audioCtx.currentTime;
-            const master = audioCtx.createGain();
-            master.connect(audioCtx.destination);
+    <script>
+        const controllers = ["אורי מייזלר", "אינה טימופייב", "אלתי קראו", "בוריס דולציגר", "בוריס ינקין", "בתיה אביה", "גדי בן אור", "דוד סייג", "הרצל שגב", "יוני יוסף", "משה אליהו", "ערן ניצן", "רון טוב", "אברהם גברילביץ'", "יוני ניסן"];
+        const stations = ["תחנה מרכזית פ\"ת", "פינסקר", "בלינסון", "דנקנר", "שנקר", "שחם", "גשר אם המושבות", "אהרונוביץ'", "בן גוריון", "ביאליק", "אבא הלל", "ארלוזורוב", "שאול המלך", "יהודית", "קרליבך", "אלנבי", "אליפלט", "שלמה", "אצטדיון בלומפילד", "עזה", "ארליך", "איסקוב", "הבעש\"ט", "מחרוזת", "העצמאות", "רוטשילד", "ז'בוטינסקי", "בלפור", "בנימין", "יוספטל", "כ\"ט בנובמבר", "העמל", "הקוממיות", "פארק דרום"];
+        const missions = ["On-Board", "קרונות", "תחנות", "בטיחות"];
+        const days = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "מוצ\"ש"];
 
-            if (type === 'launch') {
-                const osc = audioCtx.createOscillator();
-                osc.frequency.setValueAtTime(150, now);
-                osc.frequency.exponentialRampToValueAtTime(40, now + 0.2);
-                const g = audioCtx.createGain();
-                g.gain.setValueAtTime(0.4, now);
-                g.gain.linearRampToValueAtTime(0, now + 0.3);
-                osc.connect(g); g.connect(master);
-                osc.start(); osc.stop(now + 0.3);
-            } else if (type === 'whistle') {
-                const osc = audioCtx.createOscillator();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(1000, now);
-                osc.frequency.exponentialRampToValueAtTime(200, now + 0.8);
-                const g = audioCtx.createGain();
-                g.gain.setValueAtTime(0, now);
-                g.gain.linearRampToValueAtTime(0.1, now + 0.1);
-                g.gain.linearRampToValueAtTime(0, now + 0.8);
-                osc.connect(g); g.connect(master);
-                osc.start(); osc.stop(now + 0.8);
-            } else if (type === 'explode') {
-                // רעש לבן בשכבות לפיצוץ עמוק
-                const bufferSize = audioCtx.sampleRate * 2;
-                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-                const noise = audioCtx.createBufferSource();
-                noise.buffer = buffer;
-                const filter = audioCtx.createBiquadFilter();
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(1000, now);
-                filter.frequency.exponentialRampToValueAtTime(40, now + 0.8);
-                const g = audioCtx.createGain();
-                g.gain.setValueAtTime(1, now);
-                g.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
-                noise.connect(filter); filter.connect(g); g.connect(master);
-                noise.start();
-            }
-        }
-
-        // --- אתחול מנוע ---
-        let scene, camera, renderer, controls, world;
-        const objectsToUpdate = [];
-        const params = { gravity: -9.82, explosionForce: 25, explosionRadius: 12 };
-
-        init();
-        animate();
-
-        function init() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x020617);
-            scene.fog = new THREE.Fog(0x020617, 20, 150);
-
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(50, 40, 50);
-
-            world = new CANNON.World();
-            world.gravity.set(0, params.gravity, 0);
-            world.allowSleep = true;
-
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
-            document.body.appendChild(renderer.domElement);
-
-            controls = new OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-
-            const ambient = new THREE.AmbientLight(0xffffff, 0.4);
-            scene.add(ambient);
-            const sun = new THREE.DirectionalLight(0xffffff, 1);
-            sun.position.set(50, 100, 50);
-            sun.castShadow = true;
-            scene.add(sun);
-
-            // קרקע
-            const floorGeo = new THREE.PlaneGeometry(300, 300);
-            const floorMat = new THREE.MeshStandardMaterial({ color: 0x0f172a });
-            const floorMesh = new THREE.Mesh(floorGeo, floorMat);
-            floorMesh.rotation.x = -Math.PI / 2;
-            floorMesh.receiveShadow = true;
-            scene.add(floorMesh);
-
-            const floorBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
-            floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-            world.addBody(floorBody);
-
-            createCity();
+        function generateSchedule() {
+            const tbody = document.getElementById('scheduleBody');
+            tbody.innerHTML = '';
             
-            const gui = new dat.GUI();
-            gui.add(params, 'explosionForce', 10, 100).name("עוצמת פיצוץ");
-            gui.add(params, 'explosionRadius', 5, 30).name("רדיוס נזק");
+            let currentMissionIdx = 0;
 
-            document.getElementById('loading').style.display = 'none';
-            window.addEventListener('mousedown', onShoot);
-        }
-
-        function createCity() {
-            const voxelGeo = new THREE.BoxGeometry(2, 2, 2);
-            const voxelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
-            
-            for (let i = 0; i < 12; i++) {
-                const bx = (Math.random() - 0.5) * 60;
-                const bz = (Math.random() - 0.5) * 60;
-                const h = 5 + Math.floor(Math.random() * 5);
+            days.forEach((day, dayIdx) => {
+                // סימולציה של 6 בקרים ביום
+                let dailyControllers = [...controllers].sort(() => 0.5 - Math.random()).slice(0, 6);
                 
-                for (let y = 0; y < h; y++) {
-                    const pos = { x: bx, y: y * 2.1 + 1, z: bz };
-                    const mesh = new THREE.Mesh(voxelGeo, voxelMat.clone());
-                    mesh.position.set(pos.x, pos.y, pos.z);
-                    mesh.castShadow = true;
-                    scene.add(mesh);
-
-                    const shape = new CANNON.Box(new CANNON.Vec3(1, 1, 1));
-                    const body = new CANNON.Body({ mass: 1, position: new CANNON.Vec3(pos.x, pos.y, pos.z) });
-                    body.addShape(shape);
-                    body.sleep();
-                    world.addBody(body);
-                    objectsToUpdate.push({ mesh, body });
-                }
-            }
-        }
-
-        function onShoot(e) {
-            if (e.button !== 0) return;
-            playComplexSound('launch');
-            playComplexSound('whistle');
-
-            // יצירת פגז (טיל)
-            const shellGroup = new THREE.Group();
-            const head = new THREE.Mesh(new THREE.SphereGeometry(0.6), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-            const glow = new THREE.PointLight(0x0ea5e9, 2, 10);
-            shellGroup.add(head);
-            shellGroup.add(glow);
-            
-            shellGroup.position.copy(camera.position);
-            scene.add(shellGroup);
-
-            const body = new CANNON.Body({ mass: 5, shape: new CANNON.Sphere(0.6), position: new CANNON.Vec3(camera.position.x, camera.position.y, camera.position.z) });
-            const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).multiplyScalar(60);
-            body.velocity.set(dir.x, dir.y, dir.z);
-            world.addBody(body);
-
-            const trailInterval = setInterval(() => {
-                const smoke = new THREE.Mesh(new THREE.SphereGeometry(0.3), new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.5 }));
-                smoke.position.copy(shellGroup.position);
-                scene.add(smoke);
-                gsap.to(smoke.scale, { x: 0, y: 0, z: 0, duration: 0.5, onComplete: () => scene.remove(smoke) });
-            }, 30);
-
-            const shellData = { mesh: shellGroup, body };
-            objectsToUpdate.push(shellData);
-
-            body.addEventListener('collide', (event) => {
-                clearInterval(trailInterval);
-                createAdvancedExplosion(event.contact.bj.position);
-                world.removeBody(body);
-                scene.remove(shellGroup);
-                objectsToUpdate.splice(objectsToUpdate.indexOf(shellData), 1);
-            });
-        }
-
-        function createAdvancedExplosion(pos) {
-            playComplexSound('explode');
-
-            // 1. פלאש אור
-            const light = new THREE.PointLight(0xffaa00, 50, 40);
-            light.position.copy(pos);
-            scene.add(light);
-            gsap.to(light, { intensity: 0, duration: 0.8, onComplete: () => scene.remove(light) });
-
-            // 2. גל הדף (Shockwave)
-            const ring = new THREE.Mesh(
-                new THREE.RingGeometry(1, 1.5, 32),
-                new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, side: THREE.DoubleSide })
-            );
-            ring.position.copy(pos);
-            ring.rotation.x = -Math.PI / 2;
-            scene.add(ring);
-            gsap.to(ring.scale, { x: params.explosionRadius, y: params.explosionRadius, duration: 0.6, ease: "expo.out" });
-            gsap.to(ring.material, { opacity: 0, duration: 0.6, onComplete: () => scene.remove(ring) });
-
-            // 3. כדור אש (Particles)
-            for (let i = 0; i < 15; i++) {
-                const fire = new THREE.Mesh(new THREE.SphereGeometry(2), new THREE.MeshBasicMaterial({ color: 0xff4400, transparent: true }));
-                fire.position.copy(pos);
-                scene.add(fire);
-                gsap.to(fire.position, { 
-                    x: pos.x + (Math.random()-0.5)*10, 
-                    y: pos.y + Math.random()*10, 
-                    z: pos.z + (Math.random()-0.5)*10, 
-                    duration: 1 
-                });
-                gsap.to(fire.scale, { x: 0, y: 0, z: 0, duration: 1 });
-                gsap.to(fire.material, { opacity: 0, duration: 1, onComplete: () => scene.remove(fire) });
-            }
-
-            // 4. פיזיקה לרסיסים
-            objectsToUpdate.forEach(obj => {
-                const dist = obj.body.position.distanceTo(pos);
-                if (dist < params.explosionRadius) {
-                    obj.body.wakeUp();
-                    const forceDir = new CANNON.Vec3().copy(obj.body.position).vsub(pos);
-                    forceDir.normalize();
-                    const strength = (1 - dist / params.explosionRadius) * params.explosionForce;
-                    obj.body.applyImpulse(forceDir.scale(strength), obj.body.position);
+                dailyControllers.forEach((name, i) => {
+                    let start = 6 + i;
+                    let end = start + 9 + (Math.random() > 0.5 ? 1 : 0);
                     
-                    // אפקט חריכה ויזואלי לרסיסים שנפגעו
-                    if (obj.mesh.material) {
-                        obj.mesh.material.emissive.setHex(0xff3300);
-                        gsap.to(obj.mesh.material.emissive, { r: 0, g: 0, b: 0, duration: 2 });
-                    }
-                }
+                    // חוקי סופ"ש
+                    if(day === "שישי") { start = 6; end = 15; }
+                    if(day === "מוצ\"ש") { start = 19; end = 24; }
+
+                    const duration = end - start;
+                    const station = stations[Math.floor(Math.random() * stations.length)];
+                    const mission = missions[Math.floor(Math.random() * missions.length)];
+                    
+                    const row = `
+                        <tr class="hover:bg-blue-50 transition">
+                            <td class="p-4 font-bold text-blue-600">${day}</td>
+                            <td class="p-4">${name}</td>
+                            <td class="p-4">${start.toString().padStart(2, '0')}:00 - ${end.toString().padStart(2, '0')}:00</td>
+                            <td class="p-4">
+                                <span class="bg-gray-100 text-xs px-2 py-1 rounded border">${mission}</span>
+                                <span class="mr-2 font-medium">${station}</span>
+                            </td>
+                            <td class="p-4">
+                                ${duration > 9 ? '<span class="text-red-500 font-bold">⚠️ חריגת 9 שעות</span>' : '<span class="text-green-500">תקין</span>'}
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
             });
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            world.step(1/60);
-            objectsToUpdate.forEach(obj => {
-                obj.mesh.position.copy(obj.body.position);
-                obj.mesh.quaternion.copy(obj.body.quaternion);
-            });
-            controls.update();
-            renderer.render(scene, camera);
-        }
+        // Initial run
+        window.onload = generateSchedule;
     </script>
 </body>
 </html>

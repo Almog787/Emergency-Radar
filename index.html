@@ -2,153 +2,199 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>מערכת שיבוץ תחנות - הקו האדום</title>
+    <title>מערכת בקרה - חיפוש וסינון מתקדם</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&display=swap');
-        body { font-family: 'Heebo', sans-serif; font-size: 14px; }
-        .station-row:nth-child(even) { background-color: #f9fafb; }
-        .shift-box { min-height: 80px; transition: 0.3s; }
-        .shift-box:hover { background-color: #eff6ff; border-color: #3b82f6; }
-        .mission-tag { font-size: 10px; padding: 1px 4px; border-radius: 4px; display: inline-block; margin-top: 4px; }
-        .on-board { background-color: #dbeafe; color: #1e40af; }
-        .station-ctrl { background-color: #dcfce7; color: #166534; }
-        .car-ctrl { background-color: #fef9c3; color: #854d0e; }
-        .safety-ctrl { background-color: #fee2e2; color: #991b1b; }
-        .sticky-col { position: sticky; right: 0; background: white; z-index: 10; border-left: 2px solid #e5e7eb; }
+        body { font-family: 'Heebo', sans-serif; }
+        .sticky-col { position: sticky; right: 0; background: white; z-index: 20; border-left: 2px solid #e5e7eb; }
+        .shift-cell { min-height: 80px; transition: all 0.2s; }
+        .highlight { background-color: #fef08a; }
     </style>
 </head>
-<body class="bg-gray-50 p-4">
+<body class="bg-slate-50">
 
-    <div class="max-w-full mx-auto">
-        <!-- Header -->
-        <header class="flex justify-between items-center mb-6 bg-white p-6 rounded-xl shadow-md border-b-4 border-blue-600">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-800">מטריצת איוש שבועי - 34 תחנות הקו האדום</h1>
-                <p class="text-blue-600 font-medium">ניהול משימות: On-Board | קרונות | תחנות | בטיחות</p>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="generateGrid()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold shadow-lg transition transform hover:scale-105">
-                    ייצר סידור חדש
-                </button>
-            </div>
-        </header>
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- Sidebar -->
+        <aside class="w-72 bg-white border-l shadow-xl p-6 overflow-y-auto hidden lg:block">
+            <h2 class="text-xl font-bold mb-6 border-b pb-2">מצב מכסות</h2>
+            <div id="controllerList" class="space-y-4"></div>
+        </aside>
 
-        <!-- Stats Panel -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white p-4 rounded-lg shadow-sm">
-                <span class="text-gray-500 block">תחנות מאוישות</span>
-                <span id="coveredStations" class="text-2xl font-bold text-blue-600">0</span>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-sm">
-                <span class="text-gray-500 block">בקרים בשימוש</span>
-                <span class="text-2xl font-bold text-green-600">15</span>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-sm">
-                <span class="text-gray-500 block">חריגות שעות (>9ש')</span>
-                <span id="alertCount" class="text-2xl font-bold text-red-600">0</span>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-sm">
-                <span class="text-gray-500 block">סטטוס מכסה חודשית</span>
-                <span class="text-2xl font-bold text-yellow-600">62%</span>
-            </div>
-        </div>
+        <!-- Main Content -->
+        <main class="flex-1 overflow-auto p-6">
+            <header class="mb-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h1 class="text-3xl font-bold text-slate-800">מטריצת איוש שבועי</h1>
+                        <p class="text-slate-500">ניהול 34 תחנות הקו האדום</p>
+                    </div>
+                    <button onclick="generateNewData()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow-md">ייצר סידור אקראי</button>
+                </div>
 
-        <!-- Matrix Table -->
-        <div class="bg-white rounded-xl shadow-2xl overflow-x-auto border border-gray-200">
-            <table class="w-full border-collapse">
-                <thead>
-                    <tr class="bg-gray-800 text-white">
-                        <th class="p-4 text-right sticky-col w-48">תחנה \ יום</th>
-                        <th class="p-4 border-r border-gray-700">ראשון</th>
-                        <th class="p-4 border-r border-gray-700">שני</th>
-                        <th class="p-4 border-r border-gray-700">שלישי</th>
-                        <th class="p-4 border-r border-gray-700">רביעי</th>
-                        <th class="p-4 border-r border-gray-700">חמישי</th>
-                        <th class="p-4 border-r border-gray-700 bg-blue-900">שישי</th>
-                        <th class="p-4 border-r border-gray-700 bg-indigo-900">מוצ"ש</th>
-                    </tr>
-                </thead>
-                <tbody id="matrixBody">
-                    <!-- Rows will be generated by JS -->
-                </tbody>
-            </table>
-        </div>
+                <!-- Filters Bar -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border flex flex-wrap gap-4 items-center">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-slate-400 mb-1">חיפוש חופשי</label>
+                        <input type="text" id="searchInput" oninput="applyFilters()" placeholder="חפש תחנה או בקר..." class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div class="w-48">
+                        <label class="block text-xs font-bold text-slate-400 mb-1">סינון לפי גזרה</label>
+                        <select id="sectorFilter" onchange="applyFilters()" class="w-full border rounded-lg px-3 py-2 outline-none">
+                            <option value="all">כל הגזרות</option>
+                            <option value="פתח תקווה">גזרת פתח תקווה</option>
+                            <option value="ז'בוטינסקי">גזרת ציר ז'בוטינסקי</option>
+                            <option value="תל אביב">גזרת תל אביב</option>
+                            <option value="יפו">גזרת יפו</option>
+                            <option value="בת ים">גזרת בת ים</option>
+                        </select>
+                    </div>
+                    <div class="w-48">
+                        <label class="block text-xs font-bold text-slate-400 mb-1">סינון לפי בקר</label>
+                        <select id="controllerFilter" onchange="applyFilters()" class="w-full border rounded-lg px-3 py-2 outline-none">
+                            <option value="all">כל הבקרים</option>
+                        </select>
+                    </div>
+                    <div class="pt-4">
+                        <span id="resultsCount" class="text-sm font-medium text-blue-600"></span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Table -->
+            <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-slate-800 text-white text-xs">
+                            <th class="p-4 sticky-col">תחנה \ יום</th>
+                            <th class="p-4 border-r border-slate-700">ראשון</th>
+                            <th class="p-4 border-r border-slate-700">שני</th>
+                            <th class="p-4 border-r border-slate-700">שלישי</th>
+                            <th class="p-4 border-r border-slate-700">רביעי</th>
+                            <th class="p-4 border-r border-slate-700">חמישי</th>
+                            <th class="p-4 border-r border-slate-700 bg-blue-900">שישי</th>
+                            <th class="p-4 border-r border-slate-700 bg-indigo-900">מוצ"ש</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scheduleTableBody"></tbody>
+                </table>
+            </div>
+        </main>
     </div>
 
     <script>
-        const stations = [
-            "תחנה מרכזית פתח תקווה", "פינסקר", "בלינסון", "דנקנר", "שנקר", "שחם", "גשר אם המושבות",
-            "אהרונוביץ'", "בן גוריון", "ביאליק", "אבא הלל", "ארלוזורוב", "שאול המלך", "יהודית", "קרליבך",
-            "אלנבי", "אליפלט", "שלמה", "אצטדיון בלומפילד", "עזה", "ארליך", "איסקוב", "הבעש\"ט", 
-            "מחרוזת", "העצמאות", "רוטשילד", "ז'בוטינסקי", "בלפור", "בנימין", "יוספטל", "כ\"ט בנובמבר",
-            "העמל", "הקוממיות", "פארק דרום"
-        ];
+        const sectors = {
+            "פתח תקווה": ["תחנה מרכזית פתח תקווה", "פינסקר", "בלינסון", "דנקנר", "שנקר", "שחם"],
+            "ז'בוטינסקי": ["גשר אם המושבות", "אהרונוביץ'", "בן גוריון", "ביאליק", "אבא הלל"],
+            "תל אביב": ["ארלוזורוב", "שאול המלך", "יהודית", "קרליבך", "אלנבי", "אליפלט"],
+            "יפו": ["שלמה", "אצטדיון בלומפילד", "עזה", "ארליך", "איסקוב", "הבעש\"ט", "מחרוזת"],
+            "בת ים": ["העצמאות", "רוטשילד", "ז'בוטינסקי", "בלפור", "בנימין", "יוספטל", "כ\"ט בנובמבר", "העמל", "הקוממיות", "פארק דרום"]
+        };
 
-        const controllers = ["אורי מייזלר", "אינה טימופייב", "אלתי קראו", "בוריס דולציגר", "בוריס ינקין", "בתיה אביה", "גדי בן אור", "דוד סייג", "הרצל שגב", "יוני יוסף", "משה אליהו", "ערן ניצן", "רון טוב", "אברהם גברילביץ'", "יוני ניסן"];
+        const controllers = ["אורי מייזלר", "אינה טימופייב", "אלתי קראו", "בוריס דולציגר", "בתיה אביה", "דוד סייג", "הרצל שגב", "יוני יוסף", "משה אליהו", "ערן ניצן", "רון טוב", "אברהם גברילביץ'"];
+        const missions = ["On-Board", "תחנות", "קרונות", "בטיחות"];
         
-        const missionTypes = [
-            { id: 'on-board', label: 'On-Board', class: 'on-board' },
-            { id: 'station', label: 'תחנות', class: 'station-ctrl' },
-            { id: 'car', label: 'קרונות', class: 'car-ctrl' },
-            { id: 'safety', label: 'בטיחות', class: 'safety-ctrl' }
-        ];
+        let allAssignments = {}; // נשמור כאן את הנתונים: { "Station": [day0, day1, ...] }
 
-        function generateGrid() {
-            const tbody = document.getElementById('matrixBody');
-            tbody.innerHTML = '';
-            let alertCount = 0;
-            let coveredCount = 0;
-
-            stations.forEach((stationName, sIdx) => {
-                let row = `<tr class="station-row border-b border-gray-100">
-                    <td class="p-3 font-bold text-gray-700 sticky-col shadow-sm">${stationName}</td>`;
-
-                for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
-                    // סימולציית איוש: לא כל התחנות מאוישות בכל יום (מדמה פריסה ריאלית של 15 בקרים)
-                    const isOccupied = Math.random() > 0.6; 
-                    
-                    if (isOccupied) {
-                        const controller = controllers[Math.floor(Math.random() * controllers.length)];
-                        const mission = missionTypes[Math.floor(Math.random() * missionTypes.length)];
-                        
-                        // חישוב שעות דינמי
-                        let start = 6 + Math.floor(Math.random() * 4);
-                        let duration = 8 + Math.floor(Math.random() * 4); // 8-12 שעות
-                        
-                        // חוקי שישי/מוצ"ש
-                        if(dayIdx === 5) { start = 6; duration = 8.5; } // שישי
-                        if(dayIdx === 6) { start = 19; duration = 5; } // מוצ"ש
-
-                        let end = start + duration;
-                        const isAlert = duration > 9 && dayIdx < 5;
-                        if(isAlert) alertCount++;
-                        coveredCount++;
-
-                        row += `
-                        <td class="p-2 border-r border-gray-100">
-                            <div class="shift-box border-l-4 ${isAlert ? 'border-red-500 bg-red-50' : 'border-blue-400'} p-2 rounded shadow-sm text-xs">
-                                <div class="font-bold text-gray-800">${controller}</div>
-                                <div class="text-gray-500 font-medium">${start.toString().padStart(2,'0')}:00 - ${(end % 24).toString().padStart(2,'0')}:00</div>
-                                <div class="mission-tag ${mission.class}">${mission.label}</div>
-                                ${isAlert ? '<div class="text-[9px] text-red-600 font-bold mt-1">⚠️ חריגה</div>' : ''}
-                            </div>
-                        </td>`;
-                    } else {
-                        row += `<td class="p-2 border-r border-gray-100 bg-gray-50/50">
-                            <div class="text-gray-300 text-center italic text-xs">---</div>
-                        </td>`;
-                    }
-                }
-                row += `</tr>`;
-                tbody.innerHTML += row;
-            });
-
-            document.getElementById('alertCount').innerText = alertCount;
-            document.getElementById('coveredStations').innerText = Math.round(coveredCount / 7);
+        function init() {
+            const ctrlFilter = document.getElementById('controllerFilter');
+            controllers.forEach(c => ctrlFilter.innerHTML += `<option value="${c}">${c}</option>`);
+            generateNewData();
         }
 
-        window.onload = generateGrid;
+        function generateNewData() {
+            allAssignments = {};
+            Object.values(sectors).flat().forEach(station => {
+                allAssignments[station] = Array(7).fill(null).map((_, dIdx) => {
+                    if (Math.random() > 0.7) {
+                        return {
+                            name: controllers[Math.floor(Math.random() * controllers.length)],
+                            mission: missions[Math.floor(Math.random() * missions.length)],
+                            hours: dIdx === 5 ? "06:00-15:00" : (dIdx === 6 ? "19:00-00:00" : "07:00-17:00"),
+                            alert: dIdx < 5 ? Math.random() > 0.8 : false
+                        };
+                    }
+                    return null;
+                });
+            });
+            applyFilters();
+            updateStats();
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const sectorTerm = document.getElementById('sectorFilter').value;
+            const ctrlTerm = document.getElementById('controllerFilter').value;
+            const tbody = document.getElementById('scheduleTableBody');
+            
+            tbody.innerHTML = '';
+            let visibleCount = 0;
+
+            Object.entries(sectors).forEach(([sectorName, stations]) => {
+                if (sectorTerm !== 'all' && sectorTerm !== sectorName) return;
+
+                stations.forEach(station => {
+                    const assignments = allAssignments[station];
+                    
+                    // בדיקה אם השורה צריכה להופיע
+                    const stationMatches = station.toLowerCase().includes(searchTerm);
+                    const anyControllerMatches = assignments.some(a => a && (a.name.toLowerCase().includes(searchTerm) || ctrlTerm === 'all' || a.name === ctrlTerm));
+                    
+                    if (!stationMatches && !anyControllerMatches) return;
+                    if (ctrlTerm !== 'all' && !assignments.some(a => a && a.name === ctrlTerm)) return;
+
+                    visibleCount++;
+                    let rowHtml = `<tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="p-3 sticky-col text-xs font-bold text-slate-700 shadow-sm">${station}</td>`;
+
+                    assignments.forEach(a => {
+                        let content = '<div class="text-slate-200 text-center">--</div>';
+                        if (a) {
+                            // אם סיננו לפי בקר ספציפי, נציג רק אותו בתאים
+                            const showThis = (ctrlTerm === 'all' || a.name === ctrlTerm) && (searchTerm === '' || a.name.includes(searchTerm) || station.includes(searchTerm));
+                            
+                            if (showThis) {
+                                content = `
+                                    <div class="p-2 rounded bg-white border border-slate-200 shadow-sm text-[10px] ${a.alert ? 'border-r-4 border-r-red-500' : ''}">
+                                        <div class="font-bold text-blue-800">${a.name}</div>
+                                        <div class="text-slate-500">${a.hours}</div>
+                                        <div class="mt-1 text-slate-400 italic">${a.mission}</div>
+                                    </div>`;
+                            }
+                        }
+                        rowHtml += `<td class="p-1 border-r border-slate-50 w-32">${content}</td>`;
+                    });
+                    
+                    rowHtml += `</tr>`;
+                    tbody.innerHTML += rowHtml;
+                });
+            });
+            document.getElementById('resultsCount').innerText = `מציג ${visibleCount} תחנות`;
+        }
+
+        function updateStats() {
+            const list = document.getElementById('controllerList');
+            list.innerHTML = '';
+            controllers.forEach(c => {
+                const count = Object.values(allAssignments).flat().filter(a => a && a.name === c).length;
+                list.innerHTML += `
+                    <div class="text-sm p-2 rounded hover:bg-slate-50 cursor-pointer" onclick="filterByCtrl('${c}')">
+                        <div class="flex justify-between">
+                            <span class="font-medium">${c}</span>
+                            <span class="text-blue-600 font-bold">${count} משמ'</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterByCtrl(name) {
+            document.getElementById('controllerFilter').value = name;
+            applyFilters();
+        }
+
+        window.onload = init;
     </script>
 </body>
 </html>

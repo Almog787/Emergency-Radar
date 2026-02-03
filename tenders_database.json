@@ -1,7 +1,0 @@
-- name: Commit and Push changes
-  run: |
-    git config --global user.name "TenderBot"
-    git config --global user.email "bot@github.com"
-    git add tenders_database.json
-    git commit -m "Update tenders database [skip ci]" || exit 0
-    git push

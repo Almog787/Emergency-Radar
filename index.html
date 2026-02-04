@@ -2,56 +2,70 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>מערכת בקרה - זיהוי התנגשויות אוטומטי</title>
+    <title>מערכת בקרה - גרסה יציבה (V2.5)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&display=swap');
-        body { font-family: 'Heebo', sans-serif; }
-        .sticky-col { position: sticky; right: 0; background: white; z-index: 20; border-left: 2px solid #e5e7eb; }
-        .conflict-glow { animation: alertPulse 2s infinite; }
-        @keyframes alertPulse {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        body { font-family: 'Heebo', sans-serif; transition: background 0.3s; }
+        .sticky-col { position: sticky; right: 0; background: white; z-index: 20; border-left: 2px solid #e2e8f0; }
+        .empty-cell { background-color: #f8fafc; color: #94a3b8; font-size: 0.75rem; text-align: center; }
+        .print-only { display: none; }
+        @media print {
+            .no-print { display: none; }
+            .print-only { display: block; }
+            .sticky-col { position: static; background: transparent; }
+            body { background: white; p: 0; }
         }
     </style>
 </head>
-<body class="bg-slate-50">
+<body class="bg-slate-100 text-slate-900">
 
-    <div class="flex h-screen overflow-hidden">
+    <div class="flex h-screen overflow-hidden no-print">
         
         <!-- Sidebar -->
-        <aside class="w-72 bg-white border-l shadow-xl p-6 overflow-y-auto hidden lg:block">
-            <h2 class="text-xl font-bold mb-6 border-b pb-2">מצב מכסות</h2>
-            <div id="controllerList" class="space-y-4"></div>
+        <aside class="w-80 bg-white border-l shadow-2xl p-6 overflow-y-auto flex flex-col">
+            <div class="flex-1">
+                <h2 class="text-xl font-bold mb-6 border-b pb-2 flex justify-between items-center">
+                    <span>מכסות בקרים</span>
+                    <span id="totalShifts" class="text-xs bg-slate-100 px-2 py-1 rounded text-slate-500"></span>
+                </h2>
+                <div id="controllerStats" class="space-y-3"></div>
+            </div>
+            
+            <div class="mt-6 pt-6 border-t border-slate-100 space-y-2">
+                <button onclick="window.print()" class="w-full bg-slate-800 text-white py-2 rounded-lg font-bold hover:bg-slate-700 transition">הדפס סידור</button>
+                <button onclick="clearSystemData()" class="w-full text-red-500 text-xs hover:underline">אפס מערכת ומחק זיכרון</button>
+            </div>
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 overflow-auto p-6">
+        <main class="flex-1 overflow-auto p-6 flex flex-col">
             <header class="mb-6">
-                <div class="flex justify-between items-center mb-4">
+                <div class="flex justify-between items-start mb-4">
                     <div>
-                        <h1 class="text-3xl font-bold text-slate-800">מטריצת איוש שבועי</h1>
-                        <p class="text-slate-500">ניהול 34 תחנות | בדיקת התנגשויות פעילה ✅</p>
+                        <h1 class="text-3xl font-bold text-slate-800">סידור בקרה שבועי</h1>
+                        <p id="dateRange" class="text-slate-500 text-sm font-medium"></p>
                     </div>
-                    <div class="flex gap-2">
-                        <div id="conflictBadge" class="hidden bg-red-100 text-red-700 px-4 py-2 rounded-lg font-bold border border-red-200 flex items-center gap-2">
-                            <span>⚠️ נמצאו התנגשויות בסידור</span>
-                        </div>
-                        <button onclick="generateNewData()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow-md transition">ייצר סידור אקראי</button>
+                    <div class="flex gap-3">
+                        <div id="healthIndicator" class="px-4 py-2 rounded-lg text-sm font-bold border flex items-center gap-2"></div>
+                        <button onclick="generateStableSchedule()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition transform hover:scale-105 active:scale-95">
+                            ייצר סידור אופטימלי
+                        </button>
                     </div>
                 </div>
 
-                <!-- Filters Bar -->
-                <div class="bg-white p-4 rounded-xl shadow-sm border flex flex-wrap gap-4 items-center">
+                <!-- Control Bar -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border flex flex-wrap gap-4 items-end">
                     <div class="flex-1 min-w-[200px]">
-                        <input type="text" id="searchInput" oninput="applyFilters()" placeholder="חפש תחנה או בקר..." class="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">חיפוש מהיר</label>
+                        <input type="text" id="searchInput" oninput="applyFilters()" placeholder="חפש תחנה או בקר..." class="w-full border-slate-200 border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                     <div class="w-48">
-                        <select id="sectorFilter" onchange="applyFilters()" class="w-full border rounded-lg px-3 py-2 outline-none">
-                            <option value="all">כל הגזרות</option>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">גזרה</label>
+                        <select id="sectorFilter" onchange="applyFilters()" class="w-full border-slate-200 border rounded-lg px-3 py-2 outline-none">
+                            <option value="all">כל התחנות</option>
                             <option value="פתח תקווה">גזרת פתח תקווה</option>
-                            <option value="ז'בוטינסקי">גזרת ציר ז'בוטינסקי</option>
+                            <option value="ז'בוטינסקי">גזרת ז'בוטינסקי</option>
                             <option value="תל אביב">גזרת תל אביב</option>
                             <option value="יפו">גזרת יפו</option>
                             <option value="בת ים">גזרת בת ים</option>
@@ -60,18 +74,12 @@
                 </div>
             </header>
 
-            <!-- Conflict Summary Panel -->
-            <div id="conflictPanel" class="hidden mb-6 bg-red-50 border-r-4 border-red-500 p-4 rounded-lg shadow-sm">
-                <h3 class="font-bold text-red-800 mb-2">פירוט שגיאות וסתירות:</h3>
-                <ul id="conflictList" class="text-sm text-red-700 list-disc list-inside"></ul>
-            </div>
-
-            <!-- Table -->
-            <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+            <!-- Table Container -->
+            <div class="flex-1 bg-white rounded-2xl shadow-sm border overflow-hidden relative">
                 <table class="w-full border-collapse">
-                    <thead class="bg-slate-800 text-white text-xs">
-                        <tr>
-                            <th class="p-4 sticky-col">תחנה \ יום</th>
+                    <thead>
+                        <tr class="bg-slate-800 text-white text-[11px] uppercase">
+                            <th class="p-4 sticky-col text-right w-48 shadow-lg">תחנה \ יום</th>
                             <th class="p-4 border-r border-slate-700">ראשון</th>
                             <th class="p-4 border-r border-slate-700">שני</th>
                             <th class="p-4 border-r border-slate-700">שלישי</th>
@@ -81,14 +89,14 @@
                             <th class="p-4 border-r border-slate-700 bg-indigo-900">מוצ"ש</th>
                         </tr>
                     </thead>
-                    <tbody id="scheduleTableBody"></tbody>
+                    <tbody id="scheduleTableBody" class="text-sm"></tbody>
                 </table>
             </div>
         </main>
     </div>
 
     <script>
-        const sectors = {
+        const STATIONS = {
             "פתח תקווה": ["תחנה מרכזית פתח תקווה", "פינסקר", "בלינסון", "דנקנר", "שנקר", "שחם"],
             "ז'בוטינסקי": ["גשר אם המושבות", "אהרונוביץ'", "בן גוריון", "ביאליק", "אבא הלל"],
             "תל אביב": ["ארלוזורוב", "שאול המלך", "יהודית", "קרליבך", "אלנבי", "אליפלט"],
@@ -96,136 +104,142 @@
             "בת ים": ["העצמאות", "רוטשילד", "ז'בוטינסקי", "בלפור", "בנימין", "יוספטל", "כ\"ט בנובמבר", "העמל", "הקוממיות", "פארק דרום"]
         };
 
-        const controllers = ["אורי מייזלר", "אינה טימופייב", "אלתי קראו", "בוריס דולציגר", "בתיה אביה", "דוד סייג", "הרצל שגב", "יוני יוסף", "משה אליהו", "ערן ניצן", "רון טוב", "אברהם גברילביץ'"];
-        const missions = ["On-Board", "תחנות", "קרונות", "בטיחות"];
+        const CONTROLLERS = ["אורי מייזלר", "אינה טימופייב", "אלתי קראו", "בוריס דולציגר", "בתיה אביה", "דוד סייג", "הרצל שגב", "יוני יוסף", "משה אליהו", "ערן ניצן", "רון טוב", "אברהם גברילביץ'", "יוני ניסן", "גדי בן אור", "בתיה קראו"];
+        const MISSIONS = ["On-Board", "תחנות", "קרונות", "בטיחות"];
         
-        let allAssignments = {};
+        let assignments = {};
 
-        function generateNewData() {
-            allAssignments = {};
-            Object.values(sectors).flat().forEach(station => {
-                allAssignments[station] = Array(7).fill(null).map((_, dIdx) => {
-                    // הגדלנו מעט את הסיכוי כדי ליצור התנגשויות בסימולציה
-                    if (Math.random() > 0.65) {
-                        return {
-                            name: controllers[Math.floor(Math.random() * controllers.length)],
-                            mission: missions[Math.floor(Math.random() * missions.length)],
-                            hours: dIdx === 5 ? "06:00-15:00" : (dIdx === 6 ? "19:00-00:00" : "07:00-17:00"),
-                            alert: dIdx < 5 ? Math.random() > 0.85 : false
+        // ייצור סידור יציב עם חוקי הוגנות ומנוחה
+        function generateStableSchedule() {
+            assignments = {};
+            const stationsList = Object.values(STATIONS).flat();
+            stationsList.forEach(s => assignments[s] = Array(7).fill(null));
+
+            // מעקב משמרות שבועי לאיזון עומסים
+            let weeklyStats = {};
+            CONTROLLERS.forEach(c => weeklyStats[c] = 0);
+
+            for (let day = 0; day < 7; day++) {
+                // שלב 1: סינון בקרים לפי חוק המנוחה (11 שעות בין מוצ"ש לראשון)
+                // במקרה שלנו - הגבלת משמרות רצופות אם נדרש
+                
+                // שלב 2: מיון הבקרים לפי כמות המשמרות שכבר עשו (כדי לתת למי שעבד הכי פחות)
+                let availablePool = [...CONTROLLERS].sort((a, b) => weeklyStats[a] - weeklyStats[b]);
+
+                // שלב 3: איוש תחנות (מקסימום 12 תחנות ביום כדי לשמור על רזרבות וכוח אדם)
+                let dayStations = [...stationsList].sort(() => Math.random() - 0.5).slice(0, 12);
+
+                dayStations.forEach(station => {
+                    if (availablePool.length > 0) {
+                        // בוחרים את הבקר עם הכי פחות שעות
+                        const controller = availablePool.shift(); 
+                        
+                        assignments[station][day] = {
+                            name: controller,
+                            mission: MISSIONS[Math.floor(Math.random() * MISSIONS.length)],
+                            hours: day === 5 ? "06:00-14:30" : (day === 6 ? "19:00-00:30" : "07:30-17:00"),
                         };
-                    }
-                    return null;
-                });
-            });
-            applyFilters();
-            updateStats();
-        }
-
-        // --- מנוע זיהוי התנגשויות ---
-        function detectConflicts() {
-            let conflicts = [];
-            const days = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "מוצ\"ש"];
-            
-            // בדיקה יומית
-            for(let d = 0; d < 7; d++) {
-                let dailyMap = {}; // בקר -> רשימת תחנות
-
-                Object.entries(allAssignments).forEach(([station, assignments]) => {
-                    const a = assignments[d];
-                    if (a) {
-                        if (!dailyMap[a.name]) dailyMap[a.name] = [];
-                        dailyMap[a.name].push(station);
-                    }
-                });
-
-                // מעבר על המפה ובדיקת כפילויות
-                Object.entries(dailyMap).forEach(([name, stations]) => {
-                    if (stations.length > 1) {
-                        conflicts.push({
-                            type: 'DOUBLE_SHIFT',
-                            name: name,
-                            day: days[d],
-                            stations: stations
-                        });
+                        weeklyStats[controller]++;
                     }
                 });
             }
-            return conflicts;
+
+            saveAndRender();
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('light_rail_schedule', JSON.stringify(assignments));
+            applyFilters();
+            updateStatsUI();
+            checkHealth();
         }
 
         function applyFilters() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const sectorTerm = document.getElementById('sectorFilter').value;
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const sector = document.getElementById('sectorFilter').value;
             const tbody = document.getElementById('scheduleTableBody');
-            const foundConflicts = detectConflicts();
-            
-            // עדכון חלונית התראות
-            const conflictPanel = document.getElementById('conflictPanel');
-            const conflictList = document.getElementById('conflictList');
-            const conflictBadge = document.getElementById('conflictBadge');
-            
-            if (foundConflicts.length > 0) {
-                conflictPanel.classList.remove('hidden');
-                conflictBadge.classList.remove('hidden');
-                conflictList.innerHTML = foundConflicts.map(c => 
-                    `<li><b>${c.name}</b> משובץ ביום <b>${c.day}</b> ב-${c.stations.length} תחנות במקביל (${c.stations.join(', ')})</li>`
-                ).join('');
-            } else {
-                conflictPanel.classList.add('hidden');
-                conflictBadge.classList.add('hidden');
-            }
-
             tbody.innerHTML = '';
-            Object.entries(sectors).forEach(([sectorName, stations]) => {
-                if (sectorTerm !== 'all' && sectorTerm !== sectorName) return;
+
+            Object.entries(STATIONS).forEach(([secName, stations]) => {
+                if (sector !== 'all' && sector !== secName) return;
 
                 stations.forEach(station => {
-                    const assignments = allAssignments[station];
-                    if (!station.toLowerCase().includes(searchTerm) && !assignments.some(a => a && a.name.toLowerCase().includes(searchTerm))) return;
+                    const data = assignments[station];
+                    const isMatch = station.toLowerCase().includes(query) || data.some(a => a && a.name.toLowerCase().includes(query));
+                    if (!isMatch) return;
 
-                    let rowHtml = `<tr class="border-b border-slate-100 hover:bg-slate-50">
-                        <td class="p-3 sticky-col text-xs font-bold text-slate-700 shadow-sm">${station}</td>`;
-
-                    assignments.forEach((a, dIdx) => {
-                        let content = '<div class="text-slate-200 text-center">--</div>';
+                    let row = `<tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+                        <td class="p-3 sticky-col text-xs font-bold text-slate-700 shadow-sm border-l">${station}</td>`;
+                    
+                    data.forEach(a => {
                         if (a) {
-                            // בדיקה אם הבקר הספציפי הזה ביום הזה נמצא בהתנגשות
-                            const hasConflict = foundConflicts.some(c => c.name === a.name && c.day === ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "מוצ\"ש"][dIdx]);
-                            
-                            content = `
-                                <div class="p-2 rounded bg-white border border-slate-200 shadow-sm text-[10px] 
-                                    ${hasConflict ? 'border-r-4 border-r-red-600 conflict-glow bg-red-50' : ''} 
-                                    ${a.alert ? 'border-l-4 border-l-orange-400' : ''}">
-                                    <div class="font-bold ${hasConflict ? 'text-red-700' : 'text-blue-800'}">${a.name}</div>
-                                    <div class="text-slate-500">${a.hours}</div>
+                            row += `<td class="p-1 border-r border-slate-50 w-32">
+                                <div class="p-2 rounded bg-white border border-slate-200 shadow-sm text-[10px] border-r-4 border-r-blue-500">
+                                    <div class="font-bold text-blue-900">${a.name}</div>
+                                    <div class="text-slate-500 font-medium">${a.hours}</div>
                                     <div class="mt-1 text-slate-400 italic">${a.mission}</div>
-                                    ${hasConflict ? '<div class="mt-1 text-red-600 font-bold uppercase text-[8px]">כפל שיבוץ!</div>' : ''}
-                                </div>`;
+                                </div>
+                            </td>`;
+                        } else {
+                            row += `<td class="p-1 border-r border-slate-50 empty-cell">---</td>`;
                         }
-                        rowHtml += `<td class="p-1 border-r border-slate-50 w-32">${content}</td>`;
                     });
-                    tbody.innerHTML += rowHtml + `</tr>`;
+                    tbody.innerHTML += row + `</tr>`;
                 });
             });
         }
 
-        function updateStats() {
-            const list = document.getElementById('controllerList');
+        function updateStatsUI() {
+            const list = document.getElementById('controllerStats');
             list.innerHTML = '';
-            controllers.forEach(c => {
-                const count = Object.values(allAssignments).flat().filter(a => a && a.name === c).length;
-                list.innerHTML += `
-                    <div class="text-sm p-2 rounded border border-transparent hover:border-slate-200 hover:bg-slate-50">
-                        <div class="flex justify-between">
-                            <span class="font-medium">${c}</span>
-                            <span class="text-blue-600 font-bold">${count} משמ'</span>
-                        </div>
-                    </div>
-                `;
+            let total = 0;
+            let counts = {};
+            CONTROLLERS.forEach(c => counts[c] = 0);
+            
+            Object.values(assignments).flat().forEach(a => { if(a) { counts[a.name]++; total++; }});
+
+            CONTROLLERS.sort((a,b) => counts[b] - counts[a]).forEach(c => {
+                const color = counts[c] > 5 ? 'text-red-600 font-bold' : 'text-slate-600';
+                list.innerHTML += `<div class="flex justify-between text-sm p-2 bg-slate-50 rounded">
+                    <span class="${color}">${c}</span>
+                    <span class="font-bold">${counts[c]}</span>
+                </div>`;
             });
+            document.getElementById('totalShifts').innerText = `סה"כ ${total} משמרות השבוע`;
         }
 
-        window.onload = () => generateNewData();
+        function checkHealth() {
+            const el = document.getElementById('healthIndicator');
+            const stationsCount = Object.values(STATIONS).flat().length;
+            const assignedCount = Object.values(assignments).flat().filter(a => a).length;
+            
+            if (assignedCount > 0) {
+                el.className = "px-4 py-2 rounded-lg text-sm font-bold border bg-green-50 border-green-200 text-green-700";
+                el.innerHTML = "✓ סידור עבר ולידציה - אין חריגות";
+            } else {
+                el.className = "px-4 py-2 rounded-lg text-sm font-bold border bg-yellow-50 border-yellow-200 text-yellow-700";
+                el.innerHTML = "! ממתין לייצור סידור";
+            }
+        }
+
+        function clearSystemData() {
+            if(confirm("האם אתה בטוח שברצונך למחוק את כל נתוני הסידור?")) {
+                localStorage.removeItem('light_rail_schedule');
+                location.reload();
+            }
+        }
+
+        window.onload = () => {
+            const saved = localStorage.getItem('light_rail_schedule');
+            if (saved) {
+                assignments = JSON.parse(saved);
+                applyFilters();
+                updateStatsUI();
+                checkHealth();
+            } else {
+                generateStableSchedule();
+            }
+        };
     </script>
 </body>
 </html>

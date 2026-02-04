@@ -3,141 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RedLine Scheduler - תאימות מלאה להגדרות</title>
+    <title>RedLine Weekly Planner - ניהול יעדים חודשי</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap');
         
-        body { font-family: 'Assistant', sans-serif; background-color: #f1f5f9; }
+        body { font-family: 'Assistant', sans-serif; background-color: #f8fafc; }
         
-        /* עיצוב בלוק משימה */
-        .task-block { 
-            height: 100%; display: flex; flex-direction: column; justify-content: center; 
-            padding: 0 4px; font-size: 10px; border-right: 1px solid rgba(255,255,255,0.3);
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-            transition: transform 0.2s; position: relative;
+        /* עיצוב הטבלה */
+        .sticky-col { position: sticky; right: 0; background: white; z-index: 20; border-left: 2px solid #e2e8f0; }
+        .sticky-header { position: sticky; top: 0; z-index: 30; background: #1e293b; color: white; }
+        
+        /* Micro Timeline inside cells */
+        .day-cell { height: 70px; position: relative; transition: bg 0.2s; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; }
+        .day-cell:hover { background-color: #f8fafc; }
+        
+        .micro-task { height: 100%; display: inline-block; position: relative; }
+        .micro-task:hover { filter: brightness(1.1); z-index: 10; transform: scaleY(1.1); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+        /* Tooltip עיצוב */
+        .task-tooltip {
+            visibility: hidden;
+            position: absolute;
+            bottom: 100%;
+            right: 50%;
+            transform: translateX(50%);
+            background: #1e293b;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            width: 220px;
+            z-index: 100;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.3);
+            pointer-events: none;
+            white-space: normal;
+            text-align: right;
         }
-        .task-block:hover { transform: scale(1.1); z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.2); border: 1px solid white; }
+        .day-cell:hover .task-tooltip { visibility: visible; }
 
-        /* מקרא צבעים מדויק */
-        .bg-station-ug { background: #047857; color: white; } /* ירוק כהה לתת"ק */
-        .bg-station-ag { background: #10b981; color: white; } /* ירוק בהיר לעילי */
-        .bg-track-clean { background: #d97706; color: white; } /* כתום לניקיון */
-        .bg-track-ride { background: #b45309; color: white; } /* חום לנסיעת מסלול */
-        .bg-onboard { background: #2563eb; color: white; } /* כחול */
-        .bg-karon { background: #7c3aed; color: white; } /* סגול לקרונות */
-        .bg-service { background: #db2777; color: white; } /* ורוד לשירות */
+        /* צבעים */
+        .bg-station { background: #10b981; } 
+        .bg-station-ug { background: #047857; } 
+        .bg-track { background: #d97706; }
+        .bg-onboard { background: #3b82f6; }
+        .bg-karon { background: #7c3aed; }
+        .bg-service { background: #db2777; }
 
-        .timeline-row { display: flex; align-items: center; border-bottom: 1px solid #e2e8f0; height: 50px; background: white; }
-        .timeline-track { flex: 1; display: flex; height: 36px; background: #f8fafc; border-radius: 4px; overflow: hidden; position: relative; border: 1px solid #e2e8f0; }
-        
-        .kpi-box { @apply bg-white p-2 rounded border border-slate-200 text-center; }
-        .kpi-title { @apply text-slate-500 text-[10px] font-bold uppercase; }
-        .kpi-val { @apply font-bold text-slate-800 text-sm; }
+        .kpi-stat { @apply flex flex-col items-center justify-center p-2 bg-white border border-slate-200 rounded shadow-sm; }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden">
 
-    <!-- Header & KPIs -->
-    <header class="bg-white border-b z-30 shadow-sm flex-shrink-0">
-        <div class="px-6 py-3 flex justify-between items-center bg-slate-900 text-white">
+    <!-- Dashboard Header -->
+    <header class="bg-white border-b z-40 shadow-sm flex-shrink-0">
+        <div class="px-6 py-4 flex justify-between items-center bg-slate-900 text-white">
             <div>
-                <h1 class="font-bold text-lg"><i class="fa-solid fa-clipboard-check text-green-400"></i> RedLine Scheduler V7</h1>
-                <p class="text-[10px] text-slate-400 opacity-80">מותאם לדרישות טבלה: קרונות 65דק', אונבורד 80/45דק', שירות 15דק'</p>
+                <h1 class="font-bold text-xl"><i class="fa-solid fa-calendar-week text-blue-400"></i> תכנון שבועי אסטרטגי</h1>
+                <p class="text-xs text-slate-400">הסידור מחושב אוטומטית כדי לסגור פערים ביעדים החודשיים</p>
             </div>
-            <button onclick="runScheduler()" class="bg-blue-600 hover:bg-blue-500 px-4 py-1.5 rounded font-bold text-sm transition shadow">
-                <i class="fa-solid fa-rotate-right"></i> שיבוץ יומי חדש
+            <button onclick="generateWeeklyPlan()" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg font-bold shadow transition flex items-center gap-2">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> צור שבוע חדש
             </button>
         </div>
 
-        <!-- Dashboard KPIs (יומי) -->
-        <div class="grid grid-cols-7 gap-2 p-2 bg-slate-50 border-b">
-            <div class="kpi-box border-l-4 border-l-green-600">
-                <div class="kpi-title">תחנות (יעד: 34)</div>
-                <div id="statStations" class="kpi-val">0</div>
+        <!-- Monthly Targets Status (Simulation) -->
+        <div class="grid grid-cols-6 gap-4 p-4 bg-slate-50 border-b">
+            <div class="kpi-stat border-t-4 border-green-600">
+                <span class="text-xs text-slate-500 uppercase font-bold">תחנות (חודשי)</span>
+                <span id="kpiStations" class="text-lg font-bold text-slate-800">0 / 680</span>
+                <div class="w-full bg-slate-200 h-1 mt-1 rounded"><div id="barStations" class="bg-green-600 h-1 rounded" style="width:0%"></div></div>
             </div>
-            <div class="kpi-box border-l-4 border-l-purple-600">
-                <div class="kpi-title">קרונות (יעד: ~16 שעות)</div>
-                <div id="statKaron" class="kpi-val">0</div>
+            <div class="kpi-stat border-t-4 border-purple-600">
+                <span class="text-xs text-slate-500 uppercase font-bold">קרונות (שעות)</span>
+                <span id="kpiKaron" class="text-lg font-bold text-slate-800">0 / ~1700</span>
+                <div class="w-full bg-slate-200 h-1 mt-1 rounded"><div id="barKaron" class="bg-purple-600 h-1 rounded" style="width:0%"></div></div>
             </div>
-            <div class="kpi-box border-l-4 border-l-blue-600">
-                <div class="kpi-title">אונבורד (יעד: 32)</div>
-                <div id="statOnboard" class="kpi-val">0</div>
+            <div class="kpi-stat border-t-4 border-blue-600">
+                <span class="text-xs text-slate-500 uppercase font-bold">אונבורד</span>
+                <span id="kpiOnboard" class="text-lg font-bold text-slate-800">0 / 720</span>
+                <div class="w-full bg-slate-200 h-1 mt-1 rounded"><div id="barOnboard" class="bg-blue-600 h-1 rounded" style="width:0%"></div></div>
             </div>
-            <div class="kpi-box border-l-4 border-l-orange-500">
-                <div class="kpi-title">ניקיון מסילה (יעד: 5)</div>
-                <div id="statTrackClean" class="kpi-val">0</div>
+            <div class="kpi-stat border-t-4 border-orange-500">
+                <span class="text-xs text-slate-500 uppercase font-bold">מסילות</span>
+                <span id="kpiTrack" class="text-lg font-bold text-slate-800">0 / 84</span>
+                <div class="w-full bg-slate-200 h-1 mt-1 rounded"><div id="barTrack" class="bg-orange-600 h-1 rounded" style="width:0%"></div></div>
             </div>
-            <div class="kpi-box border-l-4 border-l-amber-700">
-                <div class="kpi-title">בקרת מסלול (R1/R3)</div>
-                <div id="statTrackRide" class="kpi-val">0</div>
+             <div class="kpi-stat border-t-4 border-pink-500">
+                <span class="text-xs text-slate-500 uppercase font-bold">שירות</span>
+                <span id="kpiService" class="text-lg font-bold text-slate-800">0 / 150</span>
+                <div class="w-full bg-slate-200 h-1 mt-1 rounded"><div id="barService" class="bg-pink-600 h-1 rounded" style="width:0%"></div></div>
             </div>
-            <div class="kpi-box border-l-4 border-l-pink-500">
-                <div class="kpi-title">שירות לנוסע</div>
-                <div id="statService" class="kpi-val">0</div>
-            </div>
-            <div class="kpi-box bg-slate-800 text-white">
-                <div class="kpi-title text-slate-300">סה"כ משימות</div>
-                <div id="statTotal" class="text-white text-sm font-bold">0</div>
+             <div class="kpi-stat bg-slate-800 border-none">
+                <span class="text-xs text-slate-400 uppercase font-bold">סטטוס שבועי</span>
+                <span class="text-sm font-bold text-white mt-1">שבוע 1 מתוך 4</span>
             </div>
         </div>
     </header>
 
-    <!-- Main Schedule Timeline -->
+    <!-- Weekly Grid -->
     <main class="flex-1 overflow-auto p-4 bg-slate-100">
-        <div class="min-w-[1200px] bg-white rounded-lg shadow">
-            <!-- Time Ruler -->
-            <div class="flex pl-48 border-b text-[10px] text-slate-400 py-1 sticky top-0 bg-white z-20 shadow-sm" id="timeRuler"></div>
-            
-            <!-- Rows -->
-            <div id="scheduleContainer" class="divide-y divide-slate-100"></div>
+        <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden min-w-[1200px]">
+            <table class="w-full border-collapse">
+                <thead class="sticky-header">
+                    <tr>
+                        <th class="p-4 sticky-col w-48 text-right bg-slate-800 border-l border-slate-700 shadow-md">בקר</th>
+                        <th class="p-3 w-1/7 border-r border-slate-700">ראשון</th>
+                        <th class="p-3 w-1/7 border-r border-slate-700">שני</th>
+                        <th class="p-3 w-1/7 border-r border-slate-700">שלישי</th>
+                        <th class="p-3 w-1/7 border-r border-slate-700">רביעי</th>
+                        <th class="p-3 w-1/7 border-r border-slate-700">חמישי</th>
+                        <th class="p-3 w-1/7 border-r border-slate-700 bg-blue-900/50">שישי</th>
+                        <th class="p-3 w-1/7 border-r border-slate-700 bg-indigo-900/50">מוצ"ש</th>
+                    </tr>
+                </thead>
+                <tbody id="plannerBody"></tbody>
+            </table>
         </div>
     </main>
 
     <script>
-        // --- 1. הגדרות נתונים מדויקות לפי הטבלה ---
+        // --- 1. הגדרות ונתונים ---
 
         const STATIONS = {
-            // רשימת תחנות לפי הטבלה "בקרת תחנות - 60 דקות"
-            UG_60: ["אליפלט", "אלנבי", "קרליבך", "יהודית", "שאול המלך", "ארלוזורוב", "אבא הלל", "ביאליק", "בן גוריון", "אהרונוביץ", "אם המושבות"],
-            // רשימת תחנות לפי הטבלה "בקרת תחנות - 30 דקות" (בלינסון 45 בנפרד)
-            AG_30: ["הקוממיות", "העמל", "כ\"ט בנובמבר", "יוספטל", "בנימין", "בלפור", "ז'בוטינסקי", "רוטשילד", "העצמאות", "מחרוזת", "הבעש\"ט", "איסקוב", "ארליך", "בלומפילד", "שלמה", "קריית אריה", "שנקר", "שחם", "דנקנר", "קרול", "פינסקר", "ת\"מ פ\"ת"],
-            SPECIAL: { "בלינסון": 45 },
-            
-            // תחנות לביצוע קרונות (לפי הטבלה: אליפלט, קרית אריה, ת"מ פ"ת, הקוממיות)
-            KARON_HUBS: ["אליפלט", "קריית אריה", "ת\"מ פ\"ת", "הקוממיות"]
-        };
-
-        const TRACK_SEGMENTS = [
-            "הקוממיות-העמל", "העמל-כ\"ט", "כ\"ט-יוספטל", "יוספטל-בנימין", "בנימין-בלפור", "בלפור-ז'בוטינסקי", 
-            "ז'בוטינסקי-רוטשילד", "רוטשילד-העצמאות", "העצמאות-מחרוזת", "מחרוזת-הבעש\"ט", "הבעש\"ט-איסקוב", 
-            "איסקוב-ארליך", "ארליך-בלומפילד", "בלומפילד-שלמה", "שלמה-אליפלט", "שנקר-שחם", "שחם-בלינסון", 
-            "בלינסון-דנקנר", "דנקנר-קרול", "קרול-פינסקר", "פינסקר-ת\"מ"
-        ];
-
-        // הגדרת משימות - תאימות מלאה לטבלה
-        const TASKS = {
-            // תחנות
-            ST_60: { min: 60, label: "תחנה (60)", color: "bg-station-ug" },
-            ST_30: { min: 30, label: "תחנה (30)", color: "bg-station-ag" },
-            ST_45: { min: 45, label: "תחנה (45)", color: "bg-station-ag" },
-
-            // קרונות
-            KARON: { min: 65, label: "קרונות", color: "bg-karon" }, // לפי טבלה: 65 דק'
-
-            // מסילות
-            TRACK_CLEAN: { min: 30, label: "ניקיון מסילה", color: "bg-track-clean" },
-            TRACK_R1: { min: 80, label: "מסלול R1", color: "bg-track-ride" }, // ת"מ פ"ת <-> הקוממיות
-            TRACK_R3: { min: 45, label: "מסלול R3", color: "bg-track-ride" }, // קרית אריה <-> אליפלט
-
-            // אונבורד
-            ONBOARD_R1: { min: 80, label: "אונבורד R1", color: "bg-onboard" }, // ממוצע בין 1:15 ל 1:30
-            ONBOARD_R3: { min: 45, label: "אונבורד R3", color: "bg-onboard" },
-
-            // שירות לנוסע
-            SERVICE_CALL: { min: 15, label: "מוקד שירות", color: "bg-service" },
-            SERVICE_CENTER: { min: 15, label: "מרכז שירות", color: "bg-service" } // לפי טבלה: 15 דק'
+            UG: ["אלנבי", "קרליבך", "יהודית", "שאול המלך", "ארלוזורוב", "אבא הלל", "ביאליק", "בן גוריון", "אהרונוביץ", "אם המושבות", "אליפלט"],
+            AG: ["הקוממיות", "העמל", "כ\"ט בנובמבר", "יוספטל", "בנימין", "בלפור", "ז'בוטינסקי", "רוטשילד", "העצמאות", "מחרוזת", "הבעש\"ט", "איסקוב", "ארליך", "בלומפילד", "שלמה", "קריית אריה", "שנקר", "שחם", "דנקנר", "קרול", "פינסקר", "ת\"מ פ\"ת"],
+            HUBS: ["אליפלט", "קריית אריה", "ת\"מ פ\"ת", "הקוממיות"]
         };
 
         const CONTROLLERS = [
@@ -147,170 +139,217 @@
             { name: "הרצל שגב", start: "14:00", end: "23:00" }, { name: "יוני יוסף", start: "14:00", end: "23:00" },
             { name: "משה אליהו", start: "15:00", end: "23:00" }, { name: "ערן ניצן", start: "06:00", end: "15:00" },
             { name: "רון טוב", start: "07:00", end: "16:00" }, { name: "אברהם גברילביץ'", start: "08:00", end: "17:00" },
-            { name: "גדי בן אור", start: "10:00", end: "19:00" }, { name: "יוני ניסן", start: "12:00", end: "21:00" },
-            { name: "בקר תגבור א'", start: "07:00", end: "16:00" } // הוספתי תגבור כדי לעמוד בעומס
+            { name: "גדי בן אור", start: "10:00", end: "19:00" }, { name: "יוני ניסן", start: "12:00", end: "21:00" }
         ];
 
-        // --- 2. מנוע השיבוץ ---
+        // משימות וצבעים
+        const TASKS = {
+            STATION_UG: { min: 60, label: "תחנה תת\"ק", color: "bg-station-ug" },
+            STATION_AG: { min: 30, label: "תחנה", color: "bg-station" },
+            STATION_SP: { min: 45, label: "תחנה (בלינסון)", color: "bg-station" },
+            KARON: { min: 65, label: "קרונות", color: "bg-karon" },
+            TRACK_CLEAN: { min: 30, label: "ניקיון מסילה", color: "bg-track" },
+            TRACK_RIDE: { min: 80, label: "בקרת מסלול", color: "bg-track" },
+            ONBOARD: { min: 60, label: "אונבורד", color: "bg-onboard" }, // ממוצע
+            SERVICE: { min: 15, label: "שירות", color: "bg-service" }
+        };
 
-        function runScheduler() {
-            const container = document.getElementById('scheduleContainer');
-            container.innerHTML = '';
-            
-            // 1. יצירת בנק משימות יומי (Backlog)
-            let dailyTasks = generateDailyBacklog();
-            
-            // 2. סטטיסטיקות
-            let stats = { 
-                stations: new Set(), 
-                karonTime: 0, 
-                onboard: 0, 
-                trackClean: 0, 
-                trackRide: 0, 
-                service: 0, 
-                total: 0 
-            };
+        // --- ניהול יעדים חודשי (State) ---
+        // נתחיל מאפס ונראה איך השבוע מתמלא
+        let monthlyProgress = {
+            stations: 0,
+            karonHours: 0,
+            onboard: 0,
+            tracks: 0,
+            service: 0
+        };
 
-            // 3. שיבוץ
+        const MONTHLY_TARGETS = {
+            stations: 680,
+            karonHours: 1700, // הערכה גסה
+            onboard: 720,
+            tracks: 84, // 21 * 4
+            service: 150
+        };
+
+        // --- 2. Main Scheduler Logic ---
+
+        function generateWeeklyPlan() {
+            // איפוס לתחילת סימולציה
+            resetProgress();
+            
+            const tbody = document.getElementById('plannerBody');
+            tbody.innerHTML = '';
+
+            // יצירת שורות בקרים
             CONTROLLERS.forEach(ctrl => {
-                let currentMin = timeToMin(ctrl.start);
-                const endMin = timeToMin(ctrl.end);
-                let shiftHtml = '';
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                
+                // עמודת שם בקר (Sticky)
+                tr.innerHTML = `
+                    <td class="p-4 sticky-col bg-white border-l shadow-sm">
+                        <div class="font-bold text-slate-800 text-sm">${ctrl.name}</div>
+                        <div class="text-[10px] text-slate-400">${ctrl.start}-${ctrl.end}</div>
+                    </td>
+                `;
 
-                while (currentMin < endMin - 15) {
-                    const timeLeft = endMin - currentMin;
-                    
-                    // שליפת משימה מתאימה מהתור
-                    let task = pullTask(dailyTasks, timeLeft);
-                    
-                    if (!task) break; // אין משימות מתאימות או נגמר הזמן
+                // עמודות ימים (0-6)
+                for(let day=0; day<7; day++) {
+                    let td = document.createElement('td');
+                    td.className = "day-cell p-0 align-top";
 
-                    // רישום סטטיסטיקה
-                    updateStats(stats, task);
-
-                    // יצירת אלמנט ויזואלי
-                    // יחס: 1.5 פיקסל לדקה
-                    const width = task.duration * 1.5; 
+                    // חישוב משימות ליום הספציפי הזה
+                    // בגרסה שבועית - אנו מייצרים יום עבודה לכל תא
+                    // כאן אנו שולחים את "היום בשבוע" כדי להתחשב בחוקי סופ"ש
+                    let dayTasks = generateDaySchedule(ctrl, day);
                     
-                    shiftHtml += `
-                        <div class="task-block ${task.def.color}" style="width: ${width}px" 
-                             title="${task.def.label}: ${task.detail || ''} (${task.duration} דק')">
-                            <div class="font-bold truncate w-full">${task.def.label}</div>
-                            <div class="text-[9px] opacity-90 truncate w-full">${task.detail || ''}</div>
+                    // יצירת הויזואליזציה (פסים צבעוניים)
+                    let timelineHTML = '';
+                    let tooltipHTML = `<div class="font-bold border-b border-slate-600 pb-1 mb-1">לו"ז יום ${getDayName(day)}</div>`;
+                    
+                    let totalMins = timeToMin(ctrl.end) - timeToMin(ctrl.start);
+                    // תיקון לסופ"ש
+                    if(day===5) totalMins = timeToMin("14:30") - timeToMin("06:00");
+                    if(day===6) totalMins = timeToMin("00:00") - timeToMin("19:00");
+
+                    dayTasks.forEach(t => {
+                        const widthPct = (t.duration / totalMins) * 100;
+                        timelineHTML += `<div class="micro-task ${t.def.color}" style="width: ${widthPct}%"></div>`;
+                        
+                        tooltipHTML += `
+                            <div class="flex justify-between mb-1 opacity-90">
+                                <span>${t.def.label} ${t.detail ? `(${t.detail})` : ''}</span>
+                                <span class="font-mono text-[10px]">${t.duration} דק'</span>
+                            </div>`;
+                    });
+
+                    td.innerHTML = `
+                        <div class="w-full h-full flex items-center px-1">
+                            <div class="w-full h-6 flex rounded overflow-hidden bg-slate-200">
+                                ${timelineHTML}
+                            </div>
+                            <div class="task-tooltip">
+                                ${tooltipHTML}
+                                <div class="mt-2 text-[10px] text-slate-400 pt-1 border-t border-slate-600">סה"כ משימות: ${dayTasks.length}</div>
+                            </div>
                         </div>
                     `;
-
-                    currentMin += task.duration;
+                    tr.appendChild(td);
                 }
-
-                // הדפסת שורת בקר
-                const row = `
-                    <div class="timeline-row hover:bg-slate-50">
-                        <div class="w-48 px-4 border-l flex-shrink-0">
-                            <div class="font-bold text-slate-700 text-sm">${ctrl.name}</div>
-                            <div class="text-xs text-slate-400 font-mono">${ctrl.start} - ${ctrl.end}</div>
-                        </div>
-                        <div class="timeline-track px-1 items-center">
-                            <div style="width: ${(timeToMin(ctrl.start) - 360) * 1.5}px; flex-shrink: 0;"></div>
-                            ${shiftHtml}
-                        </div>
-                    </div>
-                `;
-                container.innerHTML += row;
+                tbody.appendChild(tr);
             });
 
-            updateDashboard(stats);
-            renderRuler();
+            updateKPIs();
         }
 
-        // --- בניית בנק משימות לפי חוקים ---
-        function generateDailyBacklog() {
-            let queue = [];
+        function generateDaySchedule(ctrl, dayIdx) {
+            // התאמת שעות לסופ"ש
+            let start = timeToMin(ctrl.start);
+            let end = timeToMin(ctrl.end);
+            
+            if(dayIdx === 5) { start = timeToMin("06:00"); end = timeToMin("14:30"); } // שישי
+            if(dayIdx === 6) { start = timeToMin("19:00"); end = timeToMin("24:00"); } // מוצ"ש
 
-            // A. תחנות: כל תחנה פעם אחת ביום בדיוק (מניעת כפילות גלובלית)
-            STATIONS.UG_60.forEach(s => queue.push({ def: TASKS.ST_60, duration: 60, detail: s, type: 'STATION' }));
-            STATIONS.AG_30.forEach(s => queue.push({ def: TASKS.ST_30, duration: 30, detail: s, type: 'STATION' }));
-            queue.push({ def: TASKS.ST_45, duration: 45, detail: "בלינסון", type: 'STATION' });
+            let currentMin = start;
+            let tasks = [];
 
-            // B. קרונות: 4 שעות לתחנה = 4 משימות של 65 דקות (260 דקות סה"כ לתחנה)
-            STATIONS.KARON_HUBS.forEach(hub => {
-                for(let i=0; i<4; i++) {
-                    queue.push({ def: TASKS.KARON, duration: 65, detail: hub, type: 'KARON' });
-                }
-            });
+            // יצירת "בנק משימות" ליום הזה - מתחשב במה שחסר לנו ביעדים החודשיים!
+            // האלגוריתם נותן משקל גבוה יותר למשימות שאנחנו בפיגור בהן
+            while(currentMin < end - 15) {
+                const timeLeft = end - currentMin;
+                const task = pickStrategicTask(timeLeft);
+                
+                if(!task) break;
 
-            // C. מסילות:
-            // 1. ניקיון (כ-5 מקטעים ביום כדי להגיע ל-21 בשבוע)
-            let dailySegments = [...TRACK_SEGMENTS].sort(() => Math.random()-0.5).slice(0, 5);
-            dailySegments.forEach(seg => queue.push({ def: TASKS.TRACK_CLEAN, duration: 30, detail: seg, type: 'TRACK_CLEAN' }));
-
-            // 2. מסלול מלא (לפחות 2 מכל סוג)
-            queue.push({ def: TASKS.TRACK_R1, duration: 80, detail: "פ\"ת-הקוממיות", type: 'TRACK_RIDE' });
-            queue.push({ def: TASKS.TRACK_R1, duration: 80, detail: "פ\"ת-הקוממיות", type: 'TRACK_RIDE' });
-            queue.push({ def: TASKS.TRACK_R3, duration: 45, detail: "ק.אריה-אליפלט", type: 'TRACK_RIDE' });
-
-            // D. שירות לנוסע
-            queue.push({ def: TASKS.SERVICE_CENTER, duration: 15, detail: "קרליבך", type: 'SERVICE' });
-            queue.push({ def: TASKS.SERVICE_CENTER, duration: 15, detail: "שלמה", type: 'SERVICE' });
-            for(let i=0; i<3; i++) queue.push({ def: TASKS.SERVICE_CALL, duration: 15, detail: "שיחה", type: 'SERVICE' });
-
-            // E. אונבורד (מילוי) - יעד יומי כ-32
-            for(let i=0; i<16; i++) queue.push({ def: TASKS.ONBOARD_R1, duration: 80, detail: "R1", type: 'ONBOARD' });
-            for(let i=0; i<16; i++) queue.push({ def: TASKS.ONBOARD_R3, duration: 45, detail: "R3", type: 'ONBOARD' });
-
-            // ערבוב ראשוני
-            return queue.sort(() => Math.random() - 0.5);
-        }
-
-        // שליפת משימה שמתאימה לזמן שנותר
-        function pullTask(queue, timeLeft) {
-            // עדיפות: קודם תחנות וקרונות (חובה), אח"כ אונבורד
-            // מחפשים משימה שהמשך שלה קטן או שווה לזמן שנותר
-            const index = queue.findIndex(t => t.duration <= timeLeft);
-            if (index > -1) {
-                return queue.splice(index, 1)[0];
+                tasks.push(task);
+                currentMin += task.duration;
+                
+                // עדכון התקדמות גלובלי
+                updateGlobalProgress(task);
             }
-            return null;
+            return tasks;
         }
 
-        function updateStats(stats, task) {
-            stats.total++;
-            if (task.type === 'STATION') stats.stations.add(task.detail);
-            if (task.type === 'KARON') stats.karonTime += (task.duration / 60);
-            if (task.type === 'ONBOARD') stats.onboard++;
-            if (task.type === 'TRACK_CLEAN') stats.trackClean++;
-            if (task.type === 'TRACK_RIDE') stats.trackRide++;
-            if (task.type === 'SERVICE') stats.service++;
+        // --- המוח האסטרטגי: בחירת משימה לפי פיגור ביעדים ---
+        function pickStrategicTask(timeLeft) {
+            // חישוב אחוז השלמה לכל קטגוריה
+            const pctStations = monthlyProgress.stations / MONTHLY_TARGETS.stations;
+            const pctOnboard = monthlyProgress.onboard / MONTHLY_TARGETS.onboard;
+            const pctTracks = monthlyProgress.tracks / MONTHLY_TARGETS.tracks;
+
+            let candidates = [];
+
+            // אם חסר בתחנות והזמן מתאים - הוסף לרשימת המועמדים
+            if (pctStations < 1 && timeLeft >= 30) {
+                candidates.push({ def: TASKS.STATION_AG, duration: 30, type: 'STATION', weight: 1 - pctStations });
+                if (timeLeft >= 60) candidates.push({ def: TASKS.STATION_UG, duration: 60, type: 'STATION', weight: (1 - pctStations)*1.2 });
+            }
+
+            // אם חסר בקרונות (עדיפות גבוהה)
+            if (timeLeft >= 65) {
+                candidates.push({ def: TASKS.KARON, duration: 65, type: 'KARON', weight: 0.8 }); // קרונות תמיד צריך
+            }
+
+            // אם חסר באונבורד
+            if (pctOnboard < 1 && timeLeft >= 60) {
+                candidates.push({ def: TASKS.ONBOARD, duration: 60, type: 'ONBOARD', weight: 1 - pctOnboard });
+            }
+            
+            // מסילות ושירות
+            if (timeLeft >= 30) candidates.push({ def: TASKS.TRACK_CLEAN, duration: 30, type: 'TRACK', weight: 0.5 });
+            if (timeLeft >= 15) candidates.push({ def: TASKS.SERVICE, duration: 15, type: 'SERVICE', weight: 0.3 });
+
+            if (candidates.length === 0) return null;
+
+            // בחירה אקראית משוקללת (Weighted Random)
+            // נותן סיכוי גבוה יותר למשימות עם משקל גבוה (איפה שיש פיגור)
+            candidates.sort((a,b) => b.weight - a.weight);
+            
+            // לוקחים אחד מהטופ 3 כדי לגוון
+            const choice = candidates[Math.floor(Math.random() * Math.min(3, candidates.length))];
+            
+            // הוספת פרטים פיקטיביים לסימולציה
+            choice.detail = getRandomDetail(choice.type);
+            
+            return choice;
         }
 
-        function updateDashboard(stats) {
-            document.getElementById('statStations').innerText = `${stats.stations.size}/34`;
-            document.getElementById('statKaron').innerText = `${stats.karonTime.toFixed(1)} ש'`;
-            document.getElementById('statOnboard').innerText = stats.onboard;
-            document.getElementById('statTrackClean').innerText = stats.trackClean;
-            document.getElementById('statTrackRide').innerText = stats.trackRide;
-            document.getElementById('statService').innerText = stats.service;
-            document.getElementById('statTotal').innerText = stats.total;
+        function updateGlobalProgress(task) {
+            if(task.type === 'STATION') monthlyProgress.stations++;
+            if(task.type === 'KARON') monthlyProgress.karonHours += (task.duration/60);
+            if(task.type === 'ONBOARD') monthlyProgress.onboard++;
+            if(task.type === 'TRACK') monthlyProgress.tracks += 0.2; // מקטע
+            if(task.type === 'SERVICE') monthlyProgress.service++;
         }
 
-        // --- Utils ---
+        function updateKPIs() {
+            updateBar('Stations', monthlyProgress.stations, MONTHLY_TARGETS.stations);
+            updateBar('Karon', monthlyProgress.karonHours, MONTHLY_TARGETS.karonHours);
+            updateBar('Onboard', monthlyProgress.onboard, MONTHLY_TARGETS.onboard);
+            updateBar('Track', monthlyProgress.tracks, MONTHLY_TARGETS.tracks);
+            updateBar('Service', monthlyProgress.service, MONTHLY_TARGETS.service);
+        }
+
+        function updateBar(id, val, target) {
+            const pct = Math.min(100, (val / target) * 100);
+            document.getElementById(`kpi${id}`).innerText = `${Math.floor(val)} / ${target}`;
+            document.getElementById(`bar${id}`).style.width = `${pct}%`;
+        }
+
+        // עזרים
+        function resetProgress() {
+            monthlyProgress = { stations: 200, karonHours: 600, onboard: 250, tracks: 20, service: 50 }; // מתחילים ממצב קיים כדי לראות השפעה
+        }
         function timeToMin(t) { const [h,m] = t.split(':'); return h*60 + (+m); }
-
-        function renderRuler() {
-            const el = document.getElementById('timeRuler');
-            el.innerHTML = '';
-            for(let h=6; h<=23; h++) {
-                // רוחב שעה = 60 דקות * 1.5 פיקסל = 90 פיקסל
-                el.innerHTML += `
-                    <div style="width: 90px; flex-shrink: 0; border-left: 1px solid #cbd5e1; padding-left: 4px;">
-                        ${h}:00
-                    </div>`;
-            }
+        function getDayName(i) { return ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "מוצ\"ש"][i]; }
+        function getRandomDetail(type) {
+            if(type === 'STATION') return STATIONS.AG[Math.floor(Math.random()*STATIONS.AG.length)];
+            if(type === 'KARON') return STATIONS.HUBS[Math.floor(Math.random()*STATIONS.HUBS.length)];
+            return "";
         }
 
-        // הפעלה ראשונית
-        window.onload = runScheduler;
-
+        window.onload = generateWeeklyPlan;
     </script>
 </body>
 </html>

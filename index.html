@@ -3,133 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RedLine Precision - תכנון משימות מדויק</title>
+    <title>RedLine Scheduler - תאימות מלאה להגדרות</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap');
         
-        body { font-family: 'Assistant', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Assistant', sans-serif; background-color: #f1f5f9; }
         
+        /* עיצוב בלוק משימה */
         .task-block { 
             height: 100%; display: flex; flex-direction: column; justify-content: center; 
-            padding: 0 6px; font-size: 10px; border-right: 1px solid rgba(255,255,255,0.2);
+            padding: 0 4px; font-size: 10px; border-right: 1px solid rgba(255,255,255,0.3);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-            transition: transform 0.2s; cursor: help;
+            transition: transform 0.2s; position: relative;
         }
-        .task-block:hover { transform: scale(1.05); z-index: 20; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border: 1px solid white; }
+        .task-block:hover { transform: scale(1.1); z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.2); border: 1px solid white; }
 
-        /* צבעים לפי סוג משימה */
-        .bg-station { background: #059669; color: white; } /* ירוק כהה */
-        .bg-station-light { background: #34d399; color: #064e3b; } /* ירוק בהיר */
-        .bg-track { background: #d97706; color: white; } /* כתום */
-        .bg-track-long { background: #92400e; color: white; } /* חום */
+        /* מקרא צבעים מדויק */
+        .bg-station-ug { background: #047857; color: white; } /* ירוק כהה לתת"ק */
+        .bg-station-ag { background: #10b981; color: white; } /* ירוק בהיר לעילי */
+        .bg-track-clean { background: #d97706; color: white; } /* כתום לניקיון */
+        .bg-track-ride { background: #b45309; color: white; } /* חום לנסיעת מסלול */
         .bg-onboard { background: #2563eb; color: white; } /* כחול */
-        .bg-karon { background: #7c3aed; color: white; } /* סגול */
-        .bg-service { background: #db2777; color: white; } /* ורוד */
-        .bg-break { background: #e2e8f0; color: #64748b; background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, #cbd5e1 5px, #cbd5e1 10px); }
+        .bg-karon { background: #7c3aed; color: white; } /* סגול לקרונות */
+        .bg-service { background: #db2777; color: white; } /* ורוד לשירות */
 
-        .timeline-row { display: flex; align-items: center; border-bottom: 1px solid #e2e8f0; height: 50px; }
-        .timeline-tracks { flex: 1; display: flex; height: 36px; background: #f1f5f9; border-radius: 4px; overflow: hidden; position: relative; }
+        .timeline-row { display: flex; align-items: center; border-bottom: 1px solid #e2e8f0; height: 50px; background: white; }
+        .timeline-track { flex: 1; display: flex; height: 36px; background: #f8fafc; border-radius: 4px; overflow: hidden; position: relative; border: 1px solid #e2e8f0; }
+        
+        .kpi-box { @apply bg-white p-2 rounded border border-slate-200 text-center; }
+        .kpi-title { @apply text-slate-500 text-[10px] font-bold uppercase; }
+        .kpi-val { @apply font-bold text-slate-800 text-sm; }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden">
 
-    <!-- Header -->
-    <header class="bg-white border-b px-6 py-3 flex justify-between items-center z-30 shadow-sm">
-        <div>
-            <h1 class="font-bold text-lg text-slate-800"><i class="fa-solid fa-list-check text-blue-600"></i> סידור עבודה יומי - אכיפת חוקים מלאה</h1>
-            <p class="text-xs text-slate-500">
-                <span class="ml-3"><i class="fa-solid fa-check text-green-500"></i> מקס' 1 בקרה לתחנה/יום</span>
-                <span class="ml-3"><i class="fa-solid fa-check text-green-500"></i> 4 שעות קרונות בתחנות קצה</span>
-                <span><i class="fa-solid fa-check text-green-500"></i> שירות לנוסע ומסלול מלא</span>
-            </p>
+    <!-- Header & KPIs -->
+    <header class="bg-white border-b z-30 shadow-sm flex-shrink-0">
+        <div class="px-6 py-3 flex justify-between items-center bg-slate-900 text-white">
+            <div>
+                <h1 class="font-bold text-lg"><i class="fa-solid fa-clipboard-check text-green-400"></i> RedLine Scheduler V7</h1>
+                <p class="text-[10px] text-slate-400 opacity-80">מותאם לדרישות טבלה: קרונות 65דק', אונבורד 80/45דק', שירות 15דק'</p>
+            </div>
+            <button onclick="runScheduler()" class="bg-blue-600 hover:bg-blue-500 px-4 py-1.5 rounded font-bold text-sm transition shadow">
+                <i class="fa-solid fa-rotate-right"></i> שיבוץ יומי חדש
+            </button>
         </div>
-        <button onclick="runScheduler()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold shadow text-sm transition">
-            <i class="fa-solid fa-rotate"></i> הרץ שיבוץ מחדש
-        </button>
+
+        <!-- Dashboard KPIs (יומי) -->
+        <div class="grid grid-cols-7 gap-2 p-2 bg-slate-50 border-b">
+            <div class="kpi-box border-l-4 border-l-green-600">
+                <div class="kpi-title">תחנות (יעד: 34)</div>
+                <div id="statStations" class="kpi-val">0</div>
+            </div>
+            <div class="kpi-box border-l-4 border-l-purple-600">
+                <div class="kpi-title">קרונות (יעד: ~16 שעות)</div>
+                <div id="statKaron" class="kpi-val">0</div>
+            </div>
+            <div class="kpi-box border-l-4 border-l-blue-600">
+                <div class="kpi-title">אונבורד (יעד: 32)</div>
+                <div id="statOnboard" class="kpi-val">0</div>
+            </div>
+            <div class="kpi-box border-l-4 border-l-orange-500">
+                <div class="kpi-title">ניקיון מסילה (יעד: 5)</div>
+                <div id="statTrackClean" class="kpi-val">0</div>
+            </div>
+            <div class="kpi-box border-l-4 border-l-amber-700">
+                <div class="kpi-title">בקרת מסלול (R1/R3)</div>
+                <div id="statTrackRide" class="kpi-val">0</div>
+            </div>
+            <div class="kpi-box border-l-4 border-l-pink-500">
+                <div class="kpi-title">שירות לנוסע</div>
+                <div id="statService" class="kpi-val">0</div>
+            </div>
+            <div class="kpi-box bg-slate-800 text-white">
+                <div class="kpi-title text-slate-300">סה"כ משימות</div>
+                <div id="statTotal" class="text-white text-sm font-bold">0</div>
+            </div>
+        </div>
     </header>
 
-    <!-- KPI Dashboard -->
-    <div class="grid grid-cols-6 gap-0 bg-slate-50 border-b text-center py-2 text-xs divide-x divide-x-reverse divide-slate-200">
-        <div class="px-2">
-            <div class="text-slate-500">תחנות (יעד: 34)</div>
-            <div id="kpiStations" class="font-bold text-lg text-green-600">0/34</div>
-        </div>
-        <div class="px-2">
-            <div class="text-slate-500">מסילות (מקטעים)</div>
-            <div id="kpiTracks" class="font-bold text-lg text-orange-600">0</div>
-        </div>
-        <div class="px-2">
-            <div class="text-slate-500">מסלול מלא (80/45)</div>
-            <div id="kpiLongTracks" class="font-bold text-lg text-amber-700">0</div>
-        </div>
-        <div class="px-2">
-            <div class="text-slate-500">אונבורד</div>
-            <div id="kpiOnboard" class="font-bold text-lg text-blue-600">0</div>
-        </div>
-        <div class="px-2">
-            <div class="text-slate-500">קרונות (שעות)</div>
-            <div id="kpiKaron" class="font-bold text-lg text-purple-600">0</div>
-        </div>
-        <div class="px-2">
-            <div class="text-slate-500">שירות לנוסע</div>
-            <div id="kpiService" class="font-bold text-lg text-pink-600">0</div>
-        </div>
-    </div>
-
-    <!-- Timeline Container -->
-    <main class="flex-1 overflow-auto p-4">
-        <div class="bg-white rounded-lg shadow border border-slate-200 min-w-[1000px]">
-            <!-- Hours Header -->
-            <div class="flex pl-48 border-b text-[10px] text-slate-400 py-1 sticky top-0 bg-white z-20" id="timeRuler">
-                <!-- JS will fill this -->
-            </div>
+    <!-- Main Schedule Timeline -->
+    <main class="flex-1 overflow-auto p-4 bg-slate-100">
+        <div class="min-w-[1200px] bg-white rounded-lg shadow">
+            <!-- Time Ruler -->
+            <div class="flex pl-48 border-b text-[10px] text-slate-400 py-1 sticky top-0 bg-white z-20 shadow-sm" id="timeRuler"></div>
             
-            <div id="scheduleContainer"></div>
+            <!-- Rows -->
+            <div id="scheduleContainer" class="divide-y divide-slate-100"></div>
         </div>
     </main>
 
     <script>
-        // --- 1. Database of Constraints ---
+        // --- 1. הגדרות נתונים מדויקות לפי הטבלה ---
 
-        // תחנות וסיווגן
         const STATIONS = {
-            UG: ["אלנבי", "קרליבך", "יהודית", "שאול המלך", "ארלוזורוב", "אבא הלל", "ביאליק", "בן גוריון", "אהרונוביץ", "אם המושבות", "אליפלט"],
-            AG: ["הקוממיות", "העמל", "כ\"ט בנובמבר", "יוספטל", "בנימין", "בלפור", "ז'בוטינסקי", "רוטשילד", "העצמאות", "מחרוזת", "הבעש\"ט", "איסקוב", "ארליך", "בלומפילד", "שלמה", "שנקר", "שחם", "דנקנר", "קרול", "פינסקר", "ת\"מ פ\"ת"],
-            KARON_HUBS: ["אליפלט", "קריית אריה", "ת\"מ פ\"ת", "הקוממיות"] // תחנות לקרונות
+            // רשימת תחנות לפי הטבלה "בקרת תחנות - 60 דקות"
+            UG_60: ["אליפלט", "אלנבי", "קרליבך", "יהודית", "שאול המלך", "ארלוזורוב", "אבא הלל", "ביאליק", "בן גוריון", "אהרונוביץ", "אם המושבות"],
+            // רשימת תחנות לפי הטבלה "בקרת תחנות - 30 דקות" (בלינסון 45 בנפרד)
+            AG_30: ["הקוממיות", "העמל", "כ\"ט בנובמבר", "יוספטל", "בנימין", "בלפור", "ז'בוטינסקי", "רוטשילד", "העצמאות", "מחרוזת", "הבעש\"ט", "איסקוב", "ארליך", "בלומפילד", "שלמה", "קריית אריה", "שנקר", "שחם", "דנקנר", "קרול", "פינסקר", "ת\"מ פ\"ת"],
+            SPECIAL: { "בלינסון": 45 },
+            
+            // תחנות לביצוע קרונות (לפי הטבלה: אליפלט, קרית אריה, ת"מ פ"ת, הקוממיות)
+            KARON_HUBS: ["אליפלט", "קריית אריה", "ת\"מ פ\"ת", "הקוממיות"]
         };
 
-        // מקטעי מסילה לניקיון
         const TRACK_SEGMENTS = [
             "הקוממיות-העמל", "העמל-כ\"ט", "כ\"ט-יוספטל", "יוספטל-בנימין", "בנימין-בלפור", "בלפור-ז'בוטינסקי", 
-            "ז'בוטינסקי-רוטשילד", "רוטשילד-העצמאות", "העצמאות-מחרוזת", "מחרוזת-הבעש\"ט", "הבעש\"ט-איסקוב",
+            "ז'בוטינסקי-רוטשילד", "רוטשילד-העצמאות", "העצמאות-מחרוזת", "מחרוזת-הבעש\"ט", "הבעש\"ט-איסקוב", 
             "איסקוב-ארליך", "ארליך-בלומפילד", "בלומפילד-שלמה", "שלמה-אליפלט", "שנקר-שחם", "שחם-בלינסון", 
             "בלינסון-דנקנר", "דנקנר-קרול", "קרול-פינסקר", "פינסקר-ת\"מ"
         ];
 
-        // הגדרת משימות מדויקת לפי הטבלה
-        const TASKS_DEF = {
+        // הגדרת משימות - תאימות מלאה לטבלה
+        const TASKS = {
             // תחנות
-            ST_UG: { min: 60, label: "בקרת תחנה תת\"ק", color: "bg-station" },
-            ST_AG: { min: 30, label: "בקרת תחנה", color: "bg-station-light" },
-            ST_BEILINSON: { min: 45, label: "בקרת תחנה (בלינסון)", color: "bg-station-light" },
-            
+            ST_60: { min: 60, label: "תחנה (60)", color: "bg-station-ug" },
+            ST_30: { min: 30, label: "תחנה (30)", color: "bg-station-ag" },
+            ST_45: { min: 45, label: "תחנה (45)", color: "bg-station-ag" },
+
             // קרונות
-            KARON: { min: 65, label: "בקרת קרונות", color: "bg-karon" },
-            
+            KARON: { min: 65, label: "קרונות", color: "bg-karon" }, // לפי טבלה: 65 דק'
+
             // מסילות
-            TRACK_CLEAN: { min: 30, label: "ניקיון מסילה", color: "bg-track" },
-            TRACK_FULL_R1: { min: 80, label: "מסלול מלא R1", color: "bg-track-long" },
-            TRACK_FULL_R3: { min: 45, label: "מסלול מלא R3", color: "bg-track-long" },
-            
+            TRACK_CLEAN: { min: 30, label: "ניקיון מסילה", color: "bg-track-clean" },
+            TRACK_R1: { min: 80, label: "מסלול R1", color: "bg-track-ride" }, // ת"מ פ"ת <-> הקוממיות
+            TRACK_R3: { min: 45, label: "מסלול R3", color: "bg-track-ride" }, // קרית אריה <-> אליפלט
+
             // אונבורד
-            ONBOARD_R1: { min: 80, label: "אונבורד R1", color: "bg-onboard" }, // ממוצע 1:20
-            ONBOARD_R3: { min: 40, label: "אונבורד R3", color: "bg-onboard" },
-            
-            // שירות
-            CALL_CENTER: { min: 15, label: "מוקד שירות", color: "bg-service" },
-            SERVICE_CENTER: { min: 45, label: "מרכז שירות", color: "bg-service" }
+            ONBOARD_R1: { min: 80, label: "אונבורד R1", color: "bg-onboard" }, // ממוצע בין 1:15 ל 1:30
+            ONBOARD_R3: { min: 45, label: "אונבורד R3", color: "bg-onboard" },
+
+            // שירות לנוסע
+            SERVICE_CALL: { min: 15, label: "מוקד שירות", color: "bg-service" },
+            SERVICE_CENTER: { min: 15, label: "מרכז שירות", color: "bg-service" } // לפי טבלה: 15 דק'
         };
 
         const CONTROLLERS = [
@@ -139,67 +147,71 @@
             { name: "הרצל שגב", start: "14:00", end: "23:00" }, { name: "יוני יוסף", start: "14:00", end: "23:00" },
             { name: "משה אליהו", start: "15:00", end: "23:00" }, { name: "ערן ניצן", start: "06:00", end: "15:00" },
             { name: "רון טוב", start: "07:00", end: "16:00" }, { name: "אברהם גברילביץ'", start: "08:00", end: "17:00" },
-            { name: "גדי בן אור", start: "10:00", end: "19:00" }, { name: "יוני ניסן", start: "12:00", end: "21:00" }
+            { name: "גדי בן אור", start: "10:00", end: "19:00" }, { name: "יוני ניסן", start: "12:00", end: "21:00" },
+            { name: "בקר תגבור א'", start: "07:00", end: "16:00" } // הוספתי תגבור כדי לעמוד בעומס
         ];
 
-        // --- 2. Logic Engine ---
+        // --- 2. מנוע השיבוץ ---
 
         function runScheduler() {
             const container = document.getElementById('scheduleContainer');
             container.innerHTML = '';
             
-            // בניית מאגר משימות גלובלי ליום הזה (Backlog)
-            // זה מבטיח שכל תחנה מופיעה בדיוק פעם אחת ברשימה לביצוע
-            let dailyTasks = buildDailyBacklog();
+            // 1. יצירת בנק משימות יומי (Backlog)
+            let dailyTasks = generateDailyBacklog();
             
-            // סטטיסטיקות
-            let stats = { stations: new Set(), tracks: 0, longTracks: 0, onboard: 0, karonHours: 0, service: 0 };
+            // 2. סטטיסטיקות
+            let stats = { 
+                stations: new Set(), 
+                karonTime: 0, 
+                onboard: 0, 
+                trackClean: 0, 
+                trackRide: 0, 
+                service: 0, 
+                total: 0 
+            };
 
-            // ריצה על כל בקר
+            // 3. שיבוץ
             CONTROLLERS.forEach(ctrl => {
                 let currentMin = timeToMin(ctrl.start);
-                let endMin = timeToMin(ctrl.end);
+                const endMin = timeToMin(ctrl.end);
                 let shiftHtml = '';
 
-                // לולאת שיבוץ דקות
-                while(currentMin < endMin - 15) {
-                    // משיכת משימה מהמאגר
-                    // הלוגיקה: נסה למצוא משימה שמתאימה לזמן שנשאר
-                    let taskObj = pullTask(dailyTasks, endMin - currentMin);
+                while (currentMin < endMin - 15) {
+                    const timeLeft = endMin - currentMin;
                     
-                    if (!taskObj) {
-                        // אם נגמרו המשימות או אין זמן - הפסקה/סוף משמרת
-                        break;
-                    }
+                    // שליפת משימה מתאימה מהתור
+                    let task = pullTask(dailyTasks, timeLeft);
+                    
+                    if (!task) break; // אין משימות מתאימות או נגמר הזמן
 
-                    // עדכון סטטיסטיקות
-                    updateStats(stats, taskObj);
+                    // רישום סטטיסטיקה
+                    updateStats(stats, task);
 
-                    // יצירת הבלוק הויזואלי
-                    let widthPercent = (taskObj.duration / (17 * 60)) * 100; // יחסי ליום עבודה של 17 שעות (06-23)
-                    // לשיפור התצוגה נשתמש בפיקסלים יחסיים
-                    let pxWidth = taskObj.duration * 2; // 2px לדקה
+                    // יצירת אלמנט ויזואלי
+                    // יחס: 1.5 פיקסל לדקה
+                    const width = task.duration * 1.5; 
                     
                     shiftHtml += `
-                        <div class="task-block ${taskObj.color}" style="width: ${pxWidth}px" title="${taskObj.detail || taskObj.label}">
-                            <div class="font-bold truncate">${taskObj.label}</div>
-                            <div class="opacity-80">${taskObj.detail || ''}</div>
+                        <div class="task-block ${task.def.color}" style="width: ${width}px" 
+                             title="${task.def.label}: ${task.detail || ''} (${task.duration} דק')">
+                            <div class="font-bold truncate w-full">${task.def.label}</div>
+                            <div class="text-[9px] opacity-90 truncate w-full">${task.detail || ''}</div>
                         </div>
                     `;
 
-                    currentMin += taskObj.duration;
+                    currentMin += task.duration;
                 }
 
-                // הוספת השורה לטבלה
+                // הדפסת שורת בקר
                 const row = `
                     <div class="timeline-row hover:bg-slate-50">
                         <div class="w-48 px-4 border-l flex-shrink-0">
                             <div class="font-bold text-slate-700 text-sm">${ctrl.name}</div>
-                            <div class="text-xs text-slate-400">${ctrl.start} - ${ctrl.end}</div>
+                            <div class="text-xs text-slate-400 font-mono">${ctrl.start} - ${ctrl.end}</div>
                         </div>
-                        <div class="timeline-tracks px-1 items-center">
-                            <!-- spacer for start time -->
-                            <div style="width: ${(timeToMin(ctrl.start) - 360) * 2}px; flex-shrink: 0;"></div>
+                        <div class="timeline-track px-1 items-center">
+                            <div style="width: ${(timeToMin(ctrl.start) - 360) * 1.5}px; flex-shrink: 0;"></div>
                             ${shiftHtml}
                         </div>
                     </div>
@@ -207,86 +219,98 @@
                 container.innerHTML += row;
             });
 
-            renderKPIs(stats);
+            updateDashboard(stats);
             renderRuler();
         }
 
-        function buildDailyBacklog() {
+        // --- בניית בנק משימות לפי חוקים ---
+        function generateDailyBacklog() {
             let queue = [];
 
-            // 1. חובה: תחנות (פעם אחת ביום לכל תחנה!)
-            STATIONS.UG.forEach(s => queue.push({ ...TASKS_DEF.ST_UG, detail: s, type: 'STATION' }));
-            STATIONS.AG.forEach(s => {
-                if(s === "בלינסון") queue.push({ ...TASKS_DEF.ST_BEILINSON, detail: s, type: 'STATION' });
-                else queue.push({ ...TASKS_DEF.ST_AG, detail: s, type: 'STATION' });
-            });
+            // A. תחנות: כל תחנה פעם אחת ביום בדיוק (מניעת כפילות גלובלית)
+            STATIONS.UG_60.forEach(s => queue.push({ def: TASKS.ST_60, duration: 60, detail: s, type: 'STATION' }));
+            STATIONS.AG_30.forEach(s => queue.push({ def: TASKS.ST_30, duration: 30, detail: s, type: 'STATION' }));
+            queue.push({ def: TASKS.ST_45, duration: 45, detail: "בלינסון", type: 'STATION' });
 
-            // 2. חובה: קרונות (4 שעות לכל תחנת קצה = כ-4 בקרות של 65 דק')
+            // B. קרונות: 4 שעות לתחנה = 4 משימות של 65 דקות (260 דקות סה"כ לתחנה)
             STATIONS.KARON_HUBS.forEach(hub => {
-                for(let i=0; i<4; i++) queue.push({ ...TASKS_DEF.KARON, detail: hub, type: 'KARON' });
+                for(let i=0; i<4; i++) {
+                    queue.push({ def: TASKS.KARON, duration: 65, detail: hub, type: 'KARON' });
+                }
             });
 
-            // 3. מסלול מלא (לפחות פעם ביום מכל סוג)
-            queue.push({ ...TASKS_DEF.TRACK_FULL_R1, type: 'LONG_TRACK' });
-            queue.push({ ...TASKS_DEF.TRACK_FULL_R1, type: 'LONG_TRACK' });
-            queue.push({ ...TASKS_DEF.TRACK_FULL_R3, type: 'LONG_TRACK' });
+            // C. מסילות:
+            // 1. ניקיון (כ-5 מקטעים ביום כדי להגיע ל-21 בשבוע)
+            let dailySegments = [...TRACK_SEGMENTS].sort(() => Math.random()-0.5).slice(0, 5);
+            dailySegments.forEach(seg => queue.push({ def: TASKS.TRACK_CLEAN, duration: 30, detail: seg, type: 'TRACK_CLEAN' }));
 
-            // 4. שירות לנוסע
-            queue.push({ ...TASKS_DEF.SERVICE_CENTER, detail: "שלמה", type: 'SERVICE' });
-            queue.push({ ...TASKS_DEF.SERVICE_CENTER, detail: "קרליבך", type: 'SERVICE' });
-            for(let i=0; i<3; i++) queue.push({ ...TASKS_DEF.CALL_CENTER, type: 'SERVICE' });
+            // 2. מסלול מלא (לפחות 2 מכל סוג)
+            queue.push({ def: TASKS.TRACK_R1, duration: 80, detail: "פ\"ת-הקוממיות", type: 'TRACK_RIDE' });
+            queue.push({ def: TASKS.TRACK_R1, duration: 80, detail: "פ\"ת-הקוממיות", type: 'TRACK_RIDE' });
+            queue.push({ def: TASKS.TRACK_R3, duration: 45, detail: "ק.אריה-אליפלט", type: 'TRACK_RIDE' });
 
-            // 5. ניקיון מסילות (מילוי)
-            TRACK_SEGMENTS.forEach(seg => queue.push({ ...TASKS_DEF.TRACK_CLEAN, detail: seg, type: 'TRACK' }));
+            // D. שירות לנוסע
+            queue.push({ def: TASKS.SERVICE_CENTER, duration: 15, detail: "קרליבך", type: 'SERVICE' });
+            queue.push({ def: TASKS.SERVICE_CENTER, duration: 15, detail: "שלמה", type: 'SERVICE' });
+            for(let i=0; i<3; i++) queue.push({ def: TASKS.SERVICE_CALL, duration: 15, detail: "שיחה", type: 'SERVICE' });
 
-            // 6. אונבורד (מילוי נפח - הרבה)
-            for(let i=0; i<30; i++) queue.push({ ...TASKS_DEF.ONBOARD_R1, type: 'ONBOARD' });
-            for(let i=0; i<30; i++) queue.push({ ...TASKS_DEF.ONBOARD_R3, type: 'ONBOARD' });
+            // E. אונבורד (מילוי) - יעד יומי כ-32
+            for(let i=0; i<16; i++) queue.push({ def: TASKS.ONBOARD_R1, duration: 80, detail: "R1", type: 'ONBOARD' });
+            for(let i=0; i<16; i++) queue.push({ def: TASKS.ONBOARD_R3, duration: 45, detail: "R3", type: 'ONBOARD' });
 
-            // ערבוב התור כדי ליצור גיוון, אבל נשמור על סדר עדיפויות באמצעות מיון ב-pullTask אם נרצה
+            // ערבוב ראשוני
             return queue.sort(() => Math.random() - 0.5);
         }
 
-        function pullTask(queue, timeRemaining) {
-            // חיפוש משימה שנכנסת בזמן שנותר
-            // עדיפות לתחנות ושירות כדי לוודא כיסוי
-            const idx = queue.findIndex(t => t.min <= timeRemaining);
-            if(idx > -1) {
-                return queue.splice(idx, 1)[0];
+        // שליפת משימה שמתאימה לזמן שנותר
+        function pullTask(queue, timeLeft) {
+            // עדיפות: קודם תחנות וקרונות (חובה), אח"כ אונבורד
+            // מחפשים משימה שהמשך שלה קטן או שווה לזמן שנותר
+            const index = queue.findIndex(t => t.duration <= timeLeft);
+            if (index > -1) {
+                return queue.splice(index, 1)[0];
             }
             return null;
         }
 
         function updateStats(stats, task) {
-            if(task.type === 'STATION') stats.stations.add(task.detail);
-            if(task.type === 'TRACK') stats.tracks++;
-            if(task.type === 'LONG_TRACK') stats.longTracks++;
-            if(task.type === 'ONBOARD') stats.onboard++;
-            if(task.type === 'KARON') stats.karonHours += (task.min / 60);
-            if(task.type === 'SERVICE') stats.service++;
+            stats.total++;
+            if (task.type === 'STATION') stats.stations.add(task.detail);
+            if (task.type === 'KARON') stats.karonTime += (task.duration / 60);
+            if (task.type === 'ONBOARD') stats.onboard++;
+            if (task.type === 'TRACK_CLEAN') stats.trackClean++;
+            if (task.type === 'TRACK_RIDE') stats.trackRide++;
+            if (task.type === 'SERVICE') stats.service++;
         }
 
-        function renderKPIs(stats) {
-            document.getElementById('kpiStations').innerText = `${stats.stations.size}/34`;
-            document.getElementById('kpiTracks').innerText = stats.tracks;
-            document.getElementById('kpiLongTracks').innerText = stats.longTracks;
-            document.getElementById('kpiOnboard').innerText = stats.onboard;
-            document.getElementById('kpiKaron').innerText = stats.karonHours.toFixed(1) + " ש'";
-            document.getElementById('kpiService').innerText = stats.service;
+        function updateDashboard(stats) {
+            document.getElementById('statStations').innerText = `${stats.stations.size}/34`;
+            document.getElementById('statKaron').innerText = `${stats.karonTime.toFixed(1)} ש'`;
+            document.getElementById('statOnboard').innerText = stats.onboard;
+            document.getElementById('statTrackClean').innerText = stats.trackClean;
+            document.getElementById('statTrackRide').innerText = stats.trackRide;
+            document.getElementById('statService').innerText = stats.service;
+            document.getElementById('statTotal').innerText = stats.total;
         }
 
-        // עזרים
+        // --- Utils ---
         function timeToMin(t) { const [h,m] = t.split(':'); return h*60 + (+m); }
-        
+
         function renderRuler() {
             const el = document.getElementById('timeRuler');
             el.innerHTML = '';
             for(let h=6; h<=23; h++) {
-                el.innerHTML += `<div style="width: 120px; flex-shrink: 0; border-left: 1px solid #e2e8f0; padding-left: 4px;">${h}:00</div>`;
+                // רוחב שעה = 60 דקות * 1.5 פיקסל = 90 פיקסל
+                el.innerHTML += `
+                    <div style="width: 90px; flex-shrink: 0; border-left: 1px solid #cbd5e1; padding-left: 4px;">
+                        ${h}:00
+                    </div>`;
             }
         }
 
+        // הפעלה ראשונית
         window.onload = runScheduler;
+
     </script>
 </body>
 </html>

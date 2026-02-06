@@ -3,353 +3,310 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RedLine Weekly Planner - ניהול יעדים חודשי</title>
+    <title>מערכת שיבוץ בקרים - הקו האדום</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap');
-        
-        body { font-family: 'Assistant', sans-serif; background-color: #f8fafc; }
-        
-        /* עיצוב הטבלה */
-        .sticky-col { position: sticky; right: 0; background: white; z-index: 20; border-left: 2px solid #e2e8f0; }
-        .sticky-header { position: sticky; top: 0; z-index: 30; background: #1e293b; color: white; }
-        
-        /* Micro Timeline inside cells */
-        .day-cell { height: 70px; position: relative; transition: bg 0.2s; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; }
-        .day-cell:hover { background-color: #f8fafc; }
-        
-        .micro-task { height: 100%; display: inline-block; position: relative; }
-        .micro-task:hover { filter: brightness(1.1); z-index: 10; transform: scaleY(1.1); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-
-        /* Tooltip עיצוב */
-        .task-tooltip {
-            visibility: hidden;
-            position: absolute;
-            bottom: 100%;
-            right: 50%;
-            transform: translateX(50%);
-            background: #1e293b;
-            color: white;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 11px;
-            width: 220px;
-            z-index: 100;
-            box-shadow: 0 10px 15px rgba(0,0,0,0.3);
-            pointer-events: none;
-            white-space: normal;
-            text-align: right;
-        }
-        .day-cell:hover .task-tooltip { visibility: visible; }
-
-        /* צבעים */
-        .bg-station { background: #10b981; } 
-        .bg-station-ug { background: #047857; } 
-        .bg-track { background: #d97706; }
-        .bg-onboard { background: #3b82f6; }
-        .bg-karon { background: #7c3aed; }
-        .bg-service { background: #db2777; }
-
-        .kpi-stat { @apply flex flex-col items-center justify-center p-2 bg-white border border-slate-200 rounded shadow-sm; }
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700&display=swap');
+        body { font-family: 'Assistant', sans-serif; background-color: #f3f4f6; }
+        .dashboard-header { background-color: #003366; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .btn-primary { background-color: #003366; transition: all 0.3s; }
+        .btn-primary:hover { background-color: #004a94; transform: translateY(-1px); }
+        tr:nth-child(even) { background-color: #f9fafb; }
+        .travel-row { background-color: #f3f4f6; color: #666; font-style: italic; }
     </style>
 </head>
-<body class="flex flex-col h-screen overflow-hidden">
+<body>
 
-    <!-- Dashboard Header -->
-    <header class="bg-white border-b z-40 shadow-sm flex-shrink-0">
-        <div class="px-6 py-4 flex justify-between items-center bg-slate-900 text-white">
-            <div>
-                <h1 class="font-bold text-xl"><i class="fa-solid fa-calendar-week text-blue-400"></i> תכנון שבועי אסטרטגי</h1>
-                <p class="text-xs text-slate-400">הסידור מחושב אוטומטית כדי לסגור פערים ביעדים החודשיים</p>
-            </div>
-            <button onclick="generateWeeklyPlan()" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg font-bold shadow transition flex items-center gap-2">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> צור שבוע חדש
-            </button>
-        </div>
-
-        <!-- Monthly Targets Status (Simulation) -->
-        <div class="grid grid-cols-6 gap-4 p-4 bg-slate-50 border-b">
-            <div class="kpi-stat border-t-4 border-green-600">
-                <span class="text-xs text-slate-500 uppercase font-bold">תחנות (חודשי)</span>
-                <span id="kpiStations" class="text-lg font-bold text-slate-800">0 / 680</span>
-                <div class="w-full bg-slate-200 h-1 mt-1 rounded"><div id="barStations" class="bg-green-600 h-1 rounded" style="width:0%"></div></div>
-            </div>
-            <div class="kpi-stat border-t-4 border-purple-600">
-                <span class="text-xs text-slate-500 uppercase font-bold">קרונות (שעות)</span>
-                <span id="kpiKaron" class="text-lg font-bold text-slate-800">0 / ~1700</span>
-                <div class="w-full bg-slate-200 h-1 mt-1 rounded"><div id="barKaron" class="bg-purple-600 h-1 rounded" style="width:0%"></div></div>
-            </div>
-            <div class="kpi-stat border-t-4 border-blue-600">
-                <span class="text-xs text-slate-500 uppercase font-bold">אונבורד</span>
-                <span id="kpiOnboard" class="text-lg font-bold text-slate-800">0 / 720</span>
-                <div class="w-full bg-slate-200 h-1 mt-1 rounded"><div id="barOnboard" class="bg-blue-600 h-1 rounded" style="width:0%"></div></div>
-            </div>
-            <div class="kpi-stat border-t-4 border-orange-500">
-                <span class="text-xs text-slate-500 uppercase font-bold">מסילות</span>
-                <span id="kpiTrack" class="text-lg font-bold text-slate-800">0 / 84</span>
-                <div class="w-full bg-slate-200 h-1 mt-1 rounded"><div id="barTrack" class="bg-orange-600 h-1 rounded" style="width:0%"></div></div>
-            </div>
-             <div class="kpi-stat border-t-4 border-pink-500">
-                <span class="text-xs text-slate-500 uppercase font-bold">שירות</span>
-                <span id="kpiService" class="text-lg font-bold text-slate-800">0 / 150</span>
-                <div class="w-full bg-slate-200 h-1 mt-1 rounded"><div id="barService" class="bg-pink-600 h-1 rounded" style="width:0%"></div></div>
-            </div>
-             <div class="kpi-stat bg-slate-800 border-none">
-                <span class="text-xs text-slate-400 uppercase font-bold">סטטוס שבועי</span>
-                <span class="text-sm font-bold text-white mt-1">שבוע 1 מתוך 4</span>
-            </div>
+    <!-- Header -->
+    <header class="dashboard-header text-white p-6 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-bold">מערכת שיבוץ בקרים חכמה</h1>
+            <div id="current-date" class="text-xl italic"></div>
         </div>
     </header>
 
-    <!-- Weekly Grid -->
-    <main class="flex-1 overflow-auto p-4 bg-slate-100">
-        <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden min-w-[1200px]">
-            <table class="w-full border-collapse">
-                <thead class="sticky-header">
-                    <tr>
-                        <th class="p-4 sticky-col w-48 text-right bg-slate-800 border-l border-slate-700 shadow-md">בקר</th>
-                        <th class="p-3 w-1/7 border-r border-slate-700">ראשון</th>
-                        <th class="p-3 w-1/7 border-r border-slate-700">שני</th>
-                        <th class="p-3 w-1/7 border-r border-slate-700">שלישי</th>
-                        <th class="p-3 w-1/7 border-r border-slate-700">רביעי</th>
-                        <th class="p-3 w-1/7 border-r border-slate-700">חמישי</th>
-                        <th class="p-3 w-1/7 border-r border-slate-700 bg-blue-900/50">שישי</th>
-                        <th class="p-3 w-1/7 border-r border-slate-700 bg-indigo-900/50">מוצ"ש</th>
-                    </tr>
-                </thead>
-                <tbody id="plannerBody"></tbody>
-            </table>
+    <!-- Navigation -->
+    <nav class="bg-white border-b sticky top-0 z-10">
+        <div class="container mx-auto flex">
+            <button onclick="showTab('dashboard')" class="px-6 py-4 font-bold border-b-2 border-blue-900 text-blue-900 transition-all hover:bg-gray-50">לוח בקרה</button>
+            <button onclick="showTab('schedule')" class="px-6 py-4 font-bold border-b-2 border-transparent hover:border-blue-300 transition-all">לו"ז יומי</button>
+            <button onclick="showTab('inspectors')" class="px-6 py-4 font-bold border-b-2 border-transparent hover:border-blue-300 transition-all">בקרים (15)</button>
+            <button onclick="showTab('stations')" class="px-6 py-4 font-bold border-b-2 border-transparent hover:border-blue-300 transition-all">מסד נתונים תחנות</button>
         </div>
+    </nav>
+
+    <main class="container mx-auto p-6">
+        
+        <!-- Tab: Dashboard -->
+        <div id="dashboard" class="tab-content active space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-800">
+                    <h3 class="text-gray-500 font-bold mb-2">תאריך לשיבוץ</h3>
+                    <input type="date" id="schedule-date" class="w-full border p-2 rounded mb-4 shadow-inner">
+                    <button onclick="generateSchedule()" class="btn-primary text-white w-full py-3 rounded-lg font-bold shadow-md">
+                        בצע שיבוץ יומי חכם
+                    </button>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-green-600">
+                    <h3 class="text-gray-500 font-bold mb-2">סטטוס ביצוע (KPI)</h3>
+                    <div class="space-y-2">
+                        <p class="flex justify-between"><span>סה"כ משמרות:</span> <span id="kpi-shifts" class="font-bold text-green-700">0</span></p>
+                        <p class="flex justify-between"><span>בקרות תחנה:</span> <span id="kpi-inspections" class="font-bold text-blue-700">0</span></p>
+                        <p class="flex justify-between"><span>נסיעות מנהלתיות:</span> <span id="kpi-travels" class="font-bold text-gray-500">0</span></p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-yellow-500 text-center flex flex-col justify-center">
+                    <p class="text-sm text-gray-500">מוכן להפעלה עבור</p>
+                    <p class="text-2xl font-black">15 בקרים</p>
+                </div>
+            </div>
+            
+            <div class="bg-blue-50 border-r-4 border-blue-500 p-4 rounded text-blue-800">
+                <strong>טיפ מערכת:</strong> האלגוריתם מתעדף תחנות שבהן מספר הבקרות החודשי נמוך מהיעד (KPI Optimization).
+            </div>
+        </div>
+
+        <!-- Tab: Schedule Results -->
+        <div id="schedule" class="tab-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">תוצאות שיבוץ יומי</h2>
+                <button onclick="exportToCSV()" class="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700">ייצוא ל-Excel (CSV)</button>
+            </div>
+            <div class="bg-white rounded-lg shadow-xl overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-800 text-white">
+                        <tr>
+                            <th class="px-4 py-3 text-right">בקר</th>
+                            <th class="px-4 py-3 text-right">משימה</th>
+                            <th class="px-4 py-3 text-right">מיקום</th>
+                            <th class="px-4 py-3 text-right">התחלה</th>
+                            <th class="px-4 py-3 text-right">סיום</th>
+                            <th class="px-4 py-3 text-right">משך</th>
+                            <th class="px-4 py-3 text-right">הערות</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedule-body">
+                        <tr>
+                            <td colspan="7" class="text-center py-10 text-gray-400 italic">טרם בוצע שיבוץ. לחץ על "בצע שיבוץ יומי" בלוח הבקרה.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab: Inspectors -->
+        <div id="inspectors" class="tab-content">
+            <h2 class="text-2xl font-bold mb-4">ניהול בקרים (15)</h2>
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <table class="min-w-full">
+                    <thead class="bg-gray-100 border-b">
+                        <tr>
+                            <th class="p-3 text-right">שם הבקר</th>
+                            <th class="p-3 text-right">משמרת</th>
+                            <th class="p-3 text-right">התחלה מועדפת</th>
+                            <th class="p-3 text-right">סיום מועדף</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inspectors-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab: Stations -->
+        <div id="stations" class="tab-content">
+            <h2 class="text-2xl font-bold mb-4">ניהול תחנות ומכסות</h2>
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <table class="min-w-full">
+                    <thead class="bg-gray-100 border-b">
+                        <tr>
+                            <th class="p-3 text-right">שם תחנה</th>
+                            <th class="p-3 text-right">סוג</th>
+                            <th class="p-3 text-right">זמן (דק')</th>
+                            <th class="p-3 text-right">Geo Index</th>
+                            <th class="p-3 text-right">יעד חודשי</th>
+                            <th class="p-3 text-right">בוצע</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stations-body"></tbody>
+                </table>
+            </div>
+        </div>
+
     </main>
 
     <script>
-        // --- 1. הגדרות ונתונים ---
-
-        const STATIONS = {
-            UG: ["אלנבי", "קרליבך", "יהודית", "שאול המלך", "ארלוזורוב", "אבא הלל", "ביאליק", "בן גוריון", "אהרונוביץ", "אם המושבות", "אליפלט"],
-            AG: ["הקוממיות", "העמל", "כ\"ט בנובמבר", "יוספטל", "בנימין", "בלפור", "ז'בוטינסקי", "רוטשילד", "העצמאות", "מחרוזת", "הבעש\"ט", "איסקוב", "ארליך", "בלומפילד", "שלמה", "קריית אריה", "שנקר", "שחם", "דנקנר", "קרול", "פינסקר", "ת\"מ פ\"ת"],
-            HUBS: ["אליפלט", "קריית אריה", "ת\"מ פ\"ת", "הקוממיות"]
-        };
-
-        const CONTROLLERS = [
-            { name: "אורי מייזלר", start: "07:00", end: "16:00" }, { name: "אינה טימופייב", start: "07:00", end: "16:00" },
-            { name: "אלתי קראו", start: "08:00", end: "17:00" }, { name: "בוריס דולציגר", start: "06:00", end: "15:00" },
-            { name: "בתיה אביה", start: "09:00", end: "18:00" }, { name: "דוד סייג", start: "07:00", end: "16:00" },
-            { name: "הרצל שגב", start: "14:00", end: "23:00" }, { name: "יוני יוסף", start: "14:00", end: "23:00" },
-            { name: "משה אליהו", start: "15:00", end: "23:00" }, { name: "ערן ניצן", start: "06:00", end: "15:00" },
-            { name: "רון טוב", start: "07:00", end: "16:00" }, { name: "אברהם גברילביץ'", start: "08:00", end: "17:00" },
-            { name: "גדי בן אור", start: "10:00", end: "19:00" }, { name: "יוני ניסן", start: "12:00", end: "21:00" }
+        // --- Data ---
+        const stations = [
+            { name: "תמ פת", type: "עילי", dur: 30, geo: 1, target: 20, actual: 5 },
+            { name: "פינסקר", type: "עילי", dur: 30, geo: 2, target: 20, actual: 8 },
+            { name: "קרית אריה", type: "עילי", dur: 30, geo: 4, target: 20, actual: 12 },
+            { name: "שנקר", type: "עילי", dur: 30, geo: 6, target: 20, actual: 3 },
+            { name: "אהרונוביץ", type: "תת-קרקעי", dur: 60, geo: 9, target: 20, actual: 15 },
+            { name: "בן גוריון", type: "תת-קרקעי", dur: 60, geo: 11, target: 20, actual: 14 },
+            { name: "ביאליק", type: "תת-קרקעי", dur: 60, geo: 12, target: 20, actual: 7 },
+            { name: "ארלוזורוב", type: "תת-קרקעי", dur: 60, geo: 14, target: 20, actual: 19 },
+            { name: "שאול המלך", type: "תת-קרקעי", dur: 60, geo: 15, target: 20, actual: 11 },
+            { name: "קרליבך", type: "תת-קרקעי", dur: 60, geo: 17, target: 20, actual: 4 },
+            { name: "אלנבי", type: "תת-קרקעי", dur: 60, geo: 18, target: 20, actual: 9 },
+            { name: "אליפלט", type: "תת-קרקעי", dur: 60, geo: 19, target: 20, actual: 13 },
+            { name: "בלומפילד", type: "עילי", dur: 30, geo: 21, target: 20, actual: 2 },
+            { name: "יפו", type: "עילי", dur: 30, geo: 23, target: 20, actual: 18 },
+            { name: "יוספטל", type: "עילי", dur: 30, geo: 28, target: 20, actual: 6 },
+            { name: "בלפור", type: "עילי", dur: 30, geo: 30, target: 20, actual: 10 },
+            { name: "בנימין", type: "עילי", dur: 30, geo: 31, target: 20, actual: 5 },
+            { name: "הקוממיות", type: "עילי", dur: 30, geo: 34, target: 20, actual: 1 }
         ];
 
-        // משימות וצבעים
-        const TASKS = {
-            STATION_UG: { min: 60, label: "תחנה תת\"ק", color: "bg-station-ug" },
-            STATION_AG: { min: 30, label: "תחנה", color: "bg-station" },
-            STATION_SP: { min: 45, label: "תחנה (בלינסון)", color: "bg-station" },
-            KARON: { min: 65, label: "קרונות", color: "bg-karon" },
-            TRACK_CLEAN: { min: 30, label: "ניקיון מסילה", color: "bg-track" },
-            TRACK_RIDE: { min: 80, label: "בקרת מסלול", color: "bg-track" },
-            ONBOARD: { min: 60, label: "אונבורד", color: "bg-onboard" }, // ממוצע
-            SERVICE: { min: 15, label: "שירות", color: "bg-service" }
-        };
+        const inspectors = [
+            { name: "דניאל אברהם", shift: "בוקר", start: "תמ פת", end: "קרית אריה" },
+            { name: "רונית לוי", shift: "בוקר", start: "הקוממיות", end: "בלפור" },
+            { name: "יוסי כהן", shift: "בוקר", start: "אליפלט", end: "אלנבי" },
+            { name: "מיכל שחר", shift: "בוקר", start: "שאול המלך", end: "ארלוזורוב" },
+            { name: "אבי ביטון", shift: "בוקר", start: "בן גוריון", end: "אהרונוביץ" },
+            { name: "שרה גולן", shift: "בוקר", start: "יוספטל", end: "העמל" },
+            { name: "עומר פרץ", shift: "בוקר", start: "קרית אריה", end: "שנקר" },
+            { name: "נועה קירל", shift: "בוקר", start: "בלפור", end: "בנימין" },
+            { name: "אלירן סבג", shift: "ערב", start: "תמ פת", end: "פינסקר" },
+            { name: "גלית דיסטל", shift: "ערב", start: "הקוממיות", end: "יוספטל" },
+            { name: "משה אשכנזי", shift: "ערב", start: "ארלוזורוב", end: "ביאליק" },
+            { name: "דנה פרידר", shift: "ערב", start: "אלנבי", end: "קרליבך" },
+            { name: "גיא זו-ארץ", shift: "ערב", start: "קרית אריה", end: "אם המושבות" },
+            { name: "רותם סלע", shift: "ערב", start: "יפו", end: "בלומפילד" },
+            { name: "אסי עזר", shift: "ערב", start: "יהודית", end: "שאול המלך" }
+        ];
 
-        // --- ניהול יעדים חודשי (State) ---
-        // נתחיל מאפס ונראה איך השבוע מתמלא
-        let monthlyProgress = {
-            stations: 0,
-            karonHours: 0,
-            onboard: 0,
-            tracks: 0,
-            service: 0
-        };
+        let masterSchedule = [];
 
-        const MONTHLY_TARGETS = {
-            stations: 680,
-            karonHours: 1700, // הערכה גסה
-            onboard: 720,
-            tracks: 84, // 21 * 4
-            service: 150
-        };
+        // --- Logic Engine ---
+        function showTab(id) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('border-blue-900', 'text-blue-900'));
+            event.target.classList.add('border-blue-900', 'text-blue-900');
+        }
 
-        // --- 2. Main Scheduler Logic ---
+        function getStationData(name) {
+            return stations.find(s => s.name === name) || stations[0];
+        }
 
-        function generateWeeklyPlan() {
-            // איפוס לתחילת סימולציה
-            resetProgress();
-            
-            const tbody = document.getElementById('plannerBody');
-            tbody.innerHTML = '';
+        function findNextBestStation(currentLocName) {
+            const currentGeo = getStationData(currentLocName).geo;
+            let best = stations[0];
+            let minScore = Infinity;
 
-            // יצירת שורות בקרים
-            CONTROLLERS.forEach(ctrl => {
-                let tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
-                
-                // עמודת שם בקר (Sticky)
-                tr.innerHTML = `
-                    <td class="p-4 sticky-col bg-white border-l shadow-sm">
-                        <div class="font-bold text-slate-800 text-sm">${ctrl.name}</div>
-                        <div class="text-[10px] text-slate-400">${ctrl.start}-${ctrl.end}</div>
-                    </td>
-                `;
-
-                // עמודות ימים (0-6)
-                for(let day=0; day<7; day++) {
-                    let td = document.createElement('td');
-                    td.className = "day-cell p-0 align-top";
-
-                    // חישוב משימות ליום הספציפי הזה
-                    // בגרסה שבועית - אנו מייצרים יום עבודה לכל תא
-                    // כאן אנו שולחים את "היום בשבוע" כדי להתחשב בחוקי סופ"ש
-                    let dayTasks = generateDaySchedule(ctrl, day);
-                    
-                    // יצירת הויזואליזציה (פסים צבעוניים)
-                    let timelineHTML = '';
-                    let tooltipHTML = `<div class="font-bold border-b border-slate-600 pb-1 mb-1">לו"ז יום ${getDayName(day)}</div>`;
-                    
-                    let totalMins = timeToMin(ctrl.end) - timeToMin(ctrl.start);
-                    // תיקון לסופ"ש
-                    if(day===5) totalMins = timeToMin("14:30") - timeToMin("06:00");
-                    if(day===6) totalMins = timeToMin("00:00") - timeToMin("19:00");
-
-                    dayTasks.forEach(t => {
-                        const widthPct = (t.duration / totalMins) * 100;
-                        timelineHTML += `<div class="micro-task ${t.def.color}" style="width: ${widthPct}%"></div>`;
-                        
-                        tooltipHTML += `
-                            <div class="flex justify-between mb-1 opacity-90">
-                                <span>${t.def.label} ${t.detail ? `(${t.detail})` : ''}</span>
-                                <span class="font-mono text-[10px]">${t.duration} דק'</span>
-                            </div>`;
-                    });
-
-                    td.innerHTML = `
-                        <div class="w-full h-full flex items-center px-1">
-                            <div class="w-full h-6 flex rounded overflow-hidden bg-slate-200">
-                                ${timelineHTML}
-                            </div>
-                            <div class="task-tooltip">
-                                ${tooltipHTML}
-                                <div class="mt-2 text-[10px] text-slate-400 pt-1 border-t border-slate-600">סה"כ משימות: ${dayTasks.length}</div>
-                            </div>
-                        </div>
-                    `;
-                    tr.appendChild(td);
+            stations.forEach(st => {
+                if (st.name === currentLocName) return;
+                const dist = Math.abs(st.geo - currentGeo);
+                const score = (dist * 2) + (st.actual * 5); // Logic from VBA
+                if (score < minScore) {
+                    minScore = score;
+                    best = st;
                 }
-                tbody.appendChild(tr);
+            });
+            return best;
+        }
+
+        function generateSchedule() {
+            const date = document.getElementById('schedule-date').value || new Date().toISOString().split('T')[0];
+            masterSchedule = [];
+            
+            inspectors.forEach(insp => {
+                let currTime = insp.shift === "בוקר" ? "06:00" : "14:00";
+                const shiftEnd = insp.shift === "בוקר" ? "14:30" : "22:30";
+                let currLoc = insp.start;
+
+                // First Task
+                const firstSt = getStationData(currLoc);
+                addTask(insp.name, "בקרת תחנה (פתיחה)", currLoc, currTime, firstSt.dur, "עוגן התחלה");
+                currTime = addMinutes(currTime, firstSt.dur);
+
+                // Main Loop
+                while (isTimeBefore(currTime, addMinutes(shiftEnd, -60))) {
+                    const nextSt = findNextBestStation(currLoc);
+                    
+                    // Travel
+                    const dist = Math.abs(getStationData(currLoc).geo - nextSt.geo);
+                    const travelTime = (dist * 3) + 5;
+                    addTask(insp.name, "נסיעה מנהלתית", `${currLoc} ➔ ${nextSt.name}`, currTime, travelTime, "גישור גיאוגרפי");
+                    currTime = addMinutes(currTime, travelTime);
+
+                    // Inspection
+                    addTask(insp.name, "בקרת תחנה", nextSt.name, currTime, nextSt.dur, "KPI Optimization");
+                    currTime = addMinutes(currTime, nextSt.dur);
+                    currLoc = nextSt.name;
+                }
+                
+                // End shift
+                addTask(insp.name, "סגירת משמרת", "משרד/קצה", currTime, 30, "סיכום ודיווח");
             });
 
+            renderSchedule();
             updateKPIs();
+            alert("השיבוץ הושלם עבור 15 בקרים!");
+            showTab('schedule');
         }
 
-        function generateDaySchedule(ctrl, dayIdx) {
-            // התאמת שעות לסופ"ש
-            let start = timeToMin(ctrl.start);
-            let end = timeToMin(ctrl.end);
-            
-            if(dayIdx === 5) { start = timeToMin("06:00"); end = timeToMin("14:30"); } // שישי
-            if(dayIdx === 6) { start = timeToMin("19:00"); end = timeToMin("24:00"); } // מוצ"ש
-
-            let currentMin = start;
-            let tasks = [];
-
-            // יצירת "בנק משימות" ליום הזה - מתחשב במה שחסר לנו ביעדים החודשיים!
-            // האלגוריתם נותן משקל גבוה יותר למשימות שאנחנו בפיגור בהן
-            while(currentMin < end - 15) {
-                const timeLeft = end - currentMin;
-                const task = pickStrategicTask(timeLeft);
-                
-                if(!task) break;
-
-                tasks.push(task);
-                currentMin += task.duration;
-                
-                // עדכון התקדמות גלובלי
-                updateGlobalProgress(task);
-            }
-            return tasks;
+        function addTask(name, task, loc, start, dur, note) {
+            const end = addMinutes(start, dur);
+            masterSchedule.push({ name, task, loc, start, end, dur, note });
         }
 
-        // --- המוח האסטרטגי: בחירת משימה לפי פיגור ביעדים ---
-        function pickStrategicTask(timeLeft) {
-            // חישוב אחוז השלמה לכל קטגוריה
-            const pctStations = monthlyProgress.stations / MONTHLY_TARGETS.stations;
-            const pctOnboard = monthlyProgress.onboard / MONTHLY_TARGETS.onboard;
-            const pctTracks = monthlyProgress.tracks / MONTHLY_TARGETS.tracks;
-
-            let candidates = [];
-
-            // אם חסר בתחנות והזמן מתאים - הוסף לרשימת המועמדים
-            if (pctStations < 1 && timeLeft >= 30) {
-                candidates.push({ def: TASKS.STATION_AG, duration: 30, type: 'STATION', weight: 1 - pctStations });
-                if (timeLeft >= 60) candidates.push({ def: TASKS.STATION_UG, duration: 60, type: 'STATION', weight: (1 - pctStations)*1.2 });
-            }
-
-            // אם חסר בקרונות (עדיפות גבוהה)
-            if (timeLeft >= 65) {
-                candidates.push({ def: TASKS.KARON, duration: 65, type: 'KARON', weight: 0.8 }); // קרונות תמיד צריך
-            }
-
-            // אם חסר באונבורד
-            if (pctOnboard < 1 && timeLeft >= 60) {
-                candidates.push({ def: TASKS.ONBOARD, duration: 60, type: 'ONBOARD', weight: 1 - pctOnboard });
-            }
-            
-            // מסילות ושירות
-            if (timeLeft >= 30) candidates.push({ def: TASKS.TRACK_CLEAN, duration: 30, type: 'TRACK', weight: 0.5 });
-            if (timeLeft >= 15) candidates.push({ def: TASKS.SERVICE, duration: 15, type: 'SERVICE', weight: 0.3 });
-
-            if (candidates.length === 0) return null;
-
-            // בחירה אקראית משוקללת (Weighted Random)
-            // נותן סיכוי גבוה יותר למשימות עם משקל גבוה (איפה שיש פיגור)
-            candidates.sort((a,b) => b.weight - a.weight);
-            
-            // לוקחים אחד מהטופ 3 כדי לגוון
-            const choice = candidates[Math.floor(Math.random() * Math.min(3, candidates.length))];
-            
-            // הוספת פרטים פיקטיביים לסימולציה
-            choice.detail = getRandomDetail(choice.type);
-            
-            return choice;
+        // --- UI Helpers ---
+        function addMinutes(timeStr, mins) {
+            let [h, m] = timeStr.split(':').map(Number);
+            let date = new Date(0, 0, 0, h, m + mins);
+            return date.toTimeString().substring(0, 5);
         }
 
-        function updateGlobalProgress(task) {
-            if(task.type === 'STATION') monthlyProgress.stations++;
-            if(task.type === 'KARON') monthlyProgress.karonHours += (task.duration/60);
-            if(task.type === 'ONBOARD') monthlyProgress.onboard++;
-            if(task.type === 'TRACK') monthlyProgress.tracks += 0.2; // מקטע
-            if(task.type === 'SERVICE') monthlyProgress.service++;
+        function isTimeBefore(t1, t2) {
+            return t1 < t2;
+        }
+
+        function renderSchedule() {
+            const body = document.getElementById('schedule-body');
+            body.innerHTML = masterSchedule.map(s => `
+                <tr class="${s.task.includes('נסיעה') ? 'travel-row' : ''}">
+                    <td class="p-3 border-b font-bold">${s.name}</td>
+                    <td class="p-3 border-b">${s.task}</td>
+                    <td class="p-3 border-b">${s.loc}</td>
+                    <td class="p-3 border-b">${s.start}</td>
+                    <td class="p-3 border-b">${s.end}</td>
+                    <td class="p-3 border-b">${s.dur} דק'</td>
+                    <td class="p-3 border-b text-xs text-gray-500">${s.note}</td>
+                </tr>
+            `).join('');
         }
 
         function updateKPIs() {
-            updateBar('Stations', monthlyProgress.stations, MONTHLY_TARGETS.stations);
-            updateBar('Karon', monthlyProgress.karonHours, MONTHLY_TARGETS.karonHours);
-            updateBar('Onboard', monthlyProgress.onboard, MONTHLY_TARGETS.onboard);
-            updateBar('Track', monthlyProgress.tracks, MONTHLY_TARGETS.tracks);
-            updateBar('Service', monthlyProgress.service, MONTHLY_TARGETS.service);
+            document.getElementById('kpi-shifts').innerText = inspectors.length;
+            document.getElementById('kpi-inspections').innerText = masterSchedule.filter(s => s.task.includes('בקרת')).length;
+            document.getElementById('kpi-travels').innerText = masterSchedule.filter(s => s.task.includes('נסיעה')).length;
         }
 
-        function updateBar(id, val, target) {
-            const pct = Math.min(100, (val / target) * 100);
-            document.getElementById(`kpi${id}`).innerText = `${Math.floor(val)} / ${target}`;
-            document.getElementById(`bar${id}`).style.width = `${pct}%`;
+        function exportToCSV() {
+            let csv = "בקר,משימה,מיקום,התחלה,סיום,משך,הערות\n";
+            masterSchedule.forEach(s => {
+                csv += `${s.name},${s.task},${s.loc},${s.start},${s.end},${s.dur},${s.note}\n`;
+            });
+            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `schedule_${new Date().toLocaleDateString()}.csv`;
+            link.click();
         }
 
-        // עזרים
-        function resetProgress() {
-            monthlyProgress = { stations: 200, karonHours: 600, onboard: 250, tracks: 20, service: 50 }; // מתחילים ממצב קיים כדי לראות השפעה
-        }
-        function timeToMin(t) { const [h,m] = t.split(':'); return h*60 + (+m); }
-        function getDayName(i) { return ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "מוצ\"ש"][i]; }
-        function getRandomDetail(type) {
-            if(type === 'STATION') return STATIONS.AG[Math.floor(Math.random()*STATIONS.AG.length)];
-            if(type === 'KARON') return STATIONS.HUBS[Math.floor(Math.random()*STATIONS.HUBS.length)];
-            return "";
-        }
-
-        window.onload = generateWeeklyPlan;
+        // Init
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('he-IL');
+        document.getElementById('inspectors-body').innerHTML = inspectors.map(i => `
+            <tr><td class="p-2 border-b">${i.name}</td><td class="p-2 border-b">${i.shift}</td><td class="p-2 border-b">${i.start}</td><td class="p-2 border-b">${i.end}</td></tr>
+        `).join('');
+        document.getElementById('stations-body').innerHTML = stations.map(s => `
+            <tr><td class="p-2 border-b font-bold">${s.name}</td><td class="p-2 border-b">${s.type}</td><td class="p-2 border-b">${s.dur}</td><td class="p-2 border-b">${s.geo}</td><td class="p-2 border-b font-bold text-blue-600">${s.target}</td><td class="p-2 border-b">${s.actual}</td></tr>
+        `).join('');
     </script>
 </body>
 </html>

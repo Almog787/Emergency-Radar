@@ -3,24 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת שיבוץ מתקדמת - R-Light Pro</title>
+    <title>R-Light Pro - מערכת שיבוץ שבועי</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&display=swap');
         :root { --primary: #1e3a8a; --secondary: #3b82f6; --bg-light: #f8fafc; }
-        body { font-family: 'Assistant', sans-serif; background-color: var(--bg-light); color: #1e293b; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        body { font-family: 'Assistant', sans-serif; background-color: var(--bg-light); color: #1e293b; overflow-x: hidden; }
+        
+        /* Tabs Transition */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .nav-btn.active { border-bottom: 3px solid var(--secondary); color: var(--primary); font-weight: 800; background-color: #eff6ff; }
-        th { background-color: #1e293b; color: white; position: sticky; top: 0; z-index: 10; }
-        .gantt-container { overflow-x: auto; white-space: nowrap; padding-bottom: 20px; }
-        .gantt-row { display: flex; border-bottom: 1px solid #e2e8f0; height: 50px; align-items: center; position: relative; }
-        .gantt-label { width: 150px; flex-shrink: 0; font-weight: bold; padding-right: 10px; position: sticky; right: 0; background: white; z-index: 5; border-left: 2px solid #ddd; }
-        .gantt-timeline { position: relative; flex-grow: 1; min-width: 1200px; height: 100%; background: repeating-linear-gradient(90deg, #fff, #fff 59px, #f1f5f9 60px); }
-        .gantt-block { position: absolute; height: 70%; top: 15%; border-radius: 6px; font-size: 11px; display: flex; justify-content: center; align-items: center; color: white; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: pointer; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .gantt-block:hover { transform: scale(1.05); z-index: 20; }
-        .kpi-alert { background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); } }
+
+        /* Navigation Styles */
+        .nav-btn.active { border-bottom: 4px solid var(--secondary); color: var(--primary); font-weight: 800; background-color: #eff6ff; }
+        
+        /* Improved Gantt Styles */
+        .gantt-container { overflow-x: auto; position: relative; background: white; border-radius: 0.75rem; border: 1px solid #e2e8f0; }
+        .gantt-header { display: flex; border-bottom: 2px solid #e2e8f0; background: #f1f5f9; position: sticky; top: 0; z-index: 20; }
+        .gantt-row { display: flex; border-bottom: 1px solid #f1f5f9; height: 60px; align-items: center; position: relative; transition: background 0.2s; }
+        .gantt-row:hover { background: #f8fafc; }
+        .gantt-label { width: 160px; flex-shrink: 0; font-weight: bold; padding: 0 1rem; position: sticky; right: 0; background: white; z-index: 10; border-left: 2px solid #e2e8f0; box-shadow: -2px 0 5px rgba(0,0,0,0.05); }
+        
+        .gantt-timeline { position: relative; flex-grow: 1; min-width: 1440px; height: 100%; }
+        .gantt-grid-line { position: absolute; top: 0; bottom: 0; border-right: 1px dashed #e2e8f0; pointer-events: none; }
+        
+        .gantt-block { position: absolute; height: 75%; top: 12.5%; border-radius: 8px; font-size: 11px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; padding: 0 4px; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.2); }
+        .gantt-block:hover { transform: scale(1.02); z-index: 30; filter: brightness(1.1); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .gantt-block .time-tag { font-size: 9px; opacity: 0.9; font-weight: normal; }
+
+        /* Type Colors */
+        .bg-inspection { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+        .bg-travel { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .bg-admin { background: linear-gradient(135deg, #64748b, #475569); }
+        .bg-anchor { background: linear-gradient(135deg, #9333ea, #7e22ce); }
+
+        .kpi-alert { animation: borderPulse 2s infinite; }
+        @keyframes borderPulse { 0% { border-color: #ef4444; } 50% { border-color: #fee2e2; } 100% { border-color: #ef4444; } }
     </style>
 </head>
 <body>
@@ -29,115 +48,170 @@
     <header class="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-black tracking-wider flex items-center gap-2">
-                    <span class="text-blue-400">⚡</span> R-Light Pro
+                <h1 class="text-2xl font-black tracking-wider flex items-center gap-2 italic">
+                    <span class="text-blue-400">⚡</span> R-LIGHT <span class="text-blue-500 text-sm font-normal">PRO</span>
                 </h1>
-                <p class="text-xs text-slate-400">מערכת שיבוץ חכמה | תיקון לולאה | Gantt</p>
             </div>
-            <div class="flex gap-3">
-                <button onclick="resetSystem()" class="text-xs bg-red-800 hover:bg-red-700 px-3 py-1 rounded transition">אפס מערכת</button>
-                <div class="text-right hidden md:block">
-                    <div id="header-date" class="font-bold"></div>
+            <div class="flex items-center gap-4">
+                <div class="text-left">
+                    <div id="header-date" class="text-sm font-bold text-slate-300"></div>
                 </div>
+                <button onclick="resetSystem()" class="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-3 py-1 rounded-lg text-xs font-bold transition-all border border-red-600/50">אפס מערכת</button>
             </div>
         </div>
     </header>
 
     <!-- Navigation -->
-    <nav class="bg-white border-b shadow-sm sticky top-[70px] z-40">
-        <div class="container mx-auto flex overflow-x-auto">
-            <button onclick="showTab('dashboard')" class="nav-btn active flex-1 py-3 px-4 font-bold text-slate-600 min-w-[100px]">לוח בקרה</button>
-            <button onclick="showTab('constraints')" class="nav-btn flex-1 py-3 px-4 font-bold text-slate-600 min-w-[120px]">אילוצים ועוגנים</button>
-            <button onclick="showTab('gantt')" class="nav-btn flex-1 py-3 px-4 font-bold text-slate-600 min-w-[100px]">תרשים Gantt</button>
-            <button onclick="showTab('schedule')" class="nav-btn flex-1 py-3 px-4 font-bold text-slate-600 min-w-[100px]">טבלת שיבוץ</button>
-            <button onclick="showTab('stations')" class="nav-btn flex-1 py-3 px-4 font-bold text-slate-600 min-w-[100px]">סטטוס תחנות</button>
+    <nav class="bg-white border-b shadow-md sticky top-[64px] z-40">
+        <div class="container mx-auto flex overflow-x-auto no-scrollbar">
+            <button onclick="showTab('dashboard')" id="btn-dashboard" class="nav-btn active flex-1 py-4 px-6 font-bold text-slate-600 transition-all whitespace-nowrap">לוח בקרה</button>
+            <button onclick="showTab('constraints')" id="btn-constraints" class="nav-btn flex-1 py-4 px-6 font-bold text-slate-600 transition-all whitespace-nowrap">אילוצים ועוגנים</button>
+            <button onclick="showTab('gantt')" id="btn-gantt" class="nav-btn flex-1 py-4 px-6 font-bold text-slate-600 transition-all whitespace-nowrap">תרשים גאנט</button>
+            <button onclick="showTab('schedule')" id="btn-schedule" class="nav-btn flex-1 py-4 px-6 font-bold text-slate-600 transition-all whitespace-nowrap">טבלת שיבוץ</button>
+            <button onclick="showTab('stations')" id="btn-stations" class="nav-btn flex-1 py-4 px-6 font-bold text-slate-600 transition-all whitespace-nowrap">סטטוס תחנות</button>
         </div>
     </nav>
 
-    <main class="container mx-auto p-4 min-h-screen pb-20">
+    <main class="container mx-auto p-4 md:p-6 min-h-screen">
 
-        <!-- Tab 1: Dashboard -->
-        <div id="dashboard" class="tab-content block fade-in space-y-6">
+        <!-- Tab: Dashboard -->
+        <div id="dashboard" class="tab-content active space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-2xl shadow border border-slate-200">
-                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-slate-800">🚀 הרצת שיבוץ</h2>
-                    <label class="text-sm font-bold text-slate-500">תאריך התחלה (יום א'):</label>
-                    <input type="date" id="start-date" class="w-full mt-1 mb-4 p-2 border rounded-lg bg-slate-50">
-                    <button onclick="generateSchedule()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition transform active:scale-95">
-                        בצע שיבוץ חכם
-                    </button>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-bold mb-4 text-slate-800 flex items-center gap-2">🚀 הרצת שיבוץ</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs font-bold text-slate-500 block mb-1">תאריך התחלה (יום א'):</label>
+                            <input type="date" id="start-date" class="w-full p-3 border rounded-xl bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                        </div>
+                        <button onclick="generateSchedule()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg transition-all transform active:scale-95 shadow-blue-200">
+                            בצע שיבוץ שבועי חכם
+                        </button>
+                    </div>
                 </div>
-                <div class="bg-white p-6 rounded-2xl shadow border border-slate-200">
-                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-red-700">⚠️ התראות KPI</h2>
-                    <div id="dashboard-alerts" class="space-y-2 max-h-[150px] overflow-y-auto italic text-slate-400 text-sm">טרם בוצע שיבוץ...</div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-bold mb-4 text-red-600 flex items-center gap-2">⚠️ התראות KPI</h2>
+                    <div id="dashboard-alerts" class="space-y-2 max-h-[180px] overflow-y-auto">
+                        <p class="text-sm text-slate-400 italic">טרם בוצע שיבוץ לשבוע הנוכחי...</p>
+                    </div>
                 </div>
-                <div class="bg-slate-800 text-white p-6 rounded-2xl shadow text-center">
-                    <div class="text-4xl font-black text-blue-400 mb-2" id="stat-total-jobs">0</div>
-                    <div class="text-sm uppercase opacity-70">משימות שובצו</div>
+
+                <div class="bg-slate-800 text-white p-6 rounded-2xl shadow-sm flex flex-col justify-center items-center text-center">
+                    <div class="text-5xl font-black text-blue-400 mb-2" id="stat-total-jobs">0</div>
+                    <div class="text-sm uppercase tracking-widest text-slate-400 font-bold">משימות שובצו השבוע</div>
                 </div>
             </div>
         </div>
 
-        <!-- Tab 2: Constraints -->
-        <div id="constraints" class="tab-content hidden fade-in space-y-6">
-            <div class="bg-white rounded-2xl shadow overflow-hidden">
-                <div class="p-4 bg-slate-100 border-b font-bold">🏥 ניהול היעדרויות</div>
+        <!-- Tab: Constraints -->
+        <div id="constraints" class="tab-content space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 bg-slate-50 border-b font-bold flex justify-between items-center text-slate-700">
+                    <span>🏥 ניהול היעדרויות (מחלה/חופש)</span>
+                    <span class="text-xs font-normal text-slate-500 italic">שינויים נשמרים אוטומטית</span>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-center text-sm">
                         <thead class="bg-slate-800 text-white">
                             <tr>
-                                <th class="p-3 text-right sticky left-0 z-20 bg-slate-800">בקר</th>
-                                <th class="p-3">א</th><th class="p-3">ב</th><th class="p-3">ג</th><th class="p-3">ד</th><th class="p-3">ה</th><th class="p-3">ו</th><th class="p-3">ש</th>
+                                <th class="p-4 text-right sticky left-0 z-20 bg-slate-800">שם הבקר</th>
+                                <th class="p-4">א'</th><th class="p-4">ב'</th><th class="p-4">ג'</th><th class="p-4">ד'</th><th class="p-4">ה'</th><th class="p-4">ו'</th><th class="p-4">ש'</th>
                             </tr>
                         </thead>
-                        <tbody id="constraints-body"></tbody>
+                        <tbody id="constraints-body" class="divide-y"></tbody>
                     </table>
                 </div>
             </div>
-            <div class="bg-white rounded-2xl shadow p-6 border border-slate-200">
-                <h3 class="text-lg font-bold mb-4 italic">⚓ הוספת עוגן ידני</h3>
+
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <h3 class="text-lg font-bold mb-4 text-slate-800 flex items-center gap-2">⚓ הוספת עוגן ידני (משימה קשיחה)</h3>
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-                    <select id="anchor-insp" class="border p-2 rounded"></select>
-                    <select id="anchor-day" class="border p-2 rounded">
-                        <option value="0">ראשון</option><option value="1">שני</option><option value="2">שלישי</option><option value="3">רביעי</option><option value="4">חמישי</option><option value="5">שישי</option><option value="6">שבת</option>
-                    </select>
-                    <input type="time" id="anchor-time" class="border p-2 rounded">
-                    <select id="anchor-station" class="border p-2 rounded"></select>
-                    <button onclick="addAnchor()" class="bg-green-600 text-white font-bold py-2 rounded">הוסף עוגן</button>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">בקר</label>
+                        <select id="anchor-insp" class="w-full border p-2.5 rounded-lg bg-slate-50 outline-none"></select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">יום</label>
+                        <select id="anchor-day" class="w-full border p-2.5 rounded-lg bg-slate-50 outline-none">
+                            <option value="0">ראשון</option><option value="1">שני</option><option value="2">שלישי</option><option value="3">רביעי</option><option value="4">חמישי</option><option value="5">שישי</option><option value="6">שבת</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">שעה</label>
+                        <input type="time" id="anchor-time" class="w-full border p-2.5 rounded-lg bg-slate-50 outline-none">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">תחנה</label>
+                        <select id="anchor-station" class="w-full border p-2.5 rounded-lg bg-slate-50 outline-none"></select>
+                    </div>
+                    <button onclick="addAnchor()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 rounded-lg shadow-md transition-all">הוסף עוגן</button>
                 </div>
-                <div id="anchors-list" class="mt-4 flex flex-wrap gap-2"></div>
+                <div id="anchors-list" class="mt-6 flex flex-wrap gap-2"></div>
             </div>
         </div>
 
-        <!-- Tab 3: Gantt -->
-        <div id="gantt" class="tab-content hidden fade-in">
-            <div class="bg-white p-4 rounded-t-xl border-x border-t flex justify-between">
-                <h2 class="font-bold italic text-slate-700">תרשים Gantt שבועי</h2>
-                <select id="gantt-day-filter" onchange="renderGantt()" class="border p-1 rounded font-bold text-blue-700"></select>
+        <!-- Tab: Gantt -->
+        <div id="gantt" class="tab-content space-y-4">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
+                <h2 class="text-xl font-bold text-slate-800">תרשים גאנט ויזואלי</h2>
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-slate-500">בחר יום לתצוגה:</label>
+                    <select id="gantt-day-filter" onchange="renderGantt()" class="border-2 border-blue-100 p-2 rounded-xl font-bold text-blue-700 focus:border-blue-500 outline-none"></select>
+                </div>
             </div>
-            <div id="gantt-area" class="gantt-container bg-white border p-4 shadow-inner"></div>
+
+            <div class="gantt-container shadow-xl">
+                <!-- Hour Header -->
+                <div class="gantt-header" id="gantt-header"></div>
+                <!-- Rows -->
+                <div id="gantt-area" class="divide-y"></div>
+            </div>
+            
+            <div class="flex flex-wrap gap-4 justify-center mt-4">
+                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-inspection"></div><span class="text-xs font-bold">בקרת תחנה</span></div>
+                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-travel"></div><span class="text-xs font-bold">נסיעה</span></div>
+                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-anchor"></div><span class="text-xs font-bold">עוגן ידני</span></div>
+                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-admin"></div><span class="text-xs font-bold">מנהלה/סגירה</span></div>
+            </div>
         </div>
 
-        <!-- Tab 4: Schedule -->
-        <div id="schedule" class="tab-content hidden fade-in">
-            <div class="bg-white rounded-xl shadow overflow-x-auto">
+        <!-- Tab: Schedule Table -->
+        <div id="schedule" class="tab-content space-y-4">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-slate-800">טבלת שיבוץ מפורטת</h2>
+                <button onclick="exportCSV()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-700 transition-all">ייצוא ל-Excel</button>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <table class="w-full text-right text-sm">
-                    <thead>
-                        <tr><th class="p-3">יום</th><th class="p-3">בקר</th><th class="p-3">משימה</th><th class="p-3">מיקום</th><th class="p-3">זמנים</th></tr>
+                    <thead class="bg-slate-800 text-white">
+                        <tr>
+                            <th class="p-4">יום</th>
+                            <th class="p-4">בקר</th>
+                            <th class="p-4">משימה</th>
+                            <th class="p-4">מיקום</th>
+                            <th class="p-4">שעות</th>
+                            <th class="p-4">סוג</th>
+                        </tr>
                     </thead>
-                    <tbody id="schedule-body"></tbody>
+                    <tbody id="schedule-body" class="divide-y"></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Tab 5: Stations -->
-        <div id="stations" class="tab-content hidden fade-in">
-            <div class="bg-white rounded-xl shadow overflow-hidden">
+        <!-- Tab: Stations KPI -->
+        <div id="stations" class="tab-content">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <table class="w-full text-right text-sm">
-                    <thead>
-                        <tr><th class="p-3">תחנה</th><th class="p-3">יעד שבועי</th><th class="p-3">בוצע</th><th class="p-3 w-1/3">התקדמות</th></tr>
+                    <thead class="bg-slate-100 text-slate-700">
+                        <tr>
+                            <th class="p-4">תחנה</th>
+                            <th class="p-4 text-center">יעד שבועי</th>
+                            <th class="p-4 text-center">בוצע בפועל</th>
+                            <th class="p-4 w-1/3">התקדמות</th>
+                        </tr>
                     </thead>
-                    <tbody id="stations-body"></tbody>
+                    <tbody id="stations-body" class="divide-y"></tbody>
                 </table>
             </div>
         </div>
@@ -145,7 +219,7 @@
     </main>
 
     <script>
-        // --- מסד נתונים ---
+        // --- Configuration & Data ---
         const stationsDB = [
             { name: "תמ פת", geo: 1, target: 20 }, { name: "פינסקר", geo: 2, target: 20 },
             { name: "קרית אריה", geo: 4, target: 25 }, { name: "שנקר", geo: 6, target: 20 },
@@ -179,56 +253,70 @@
             stationCounts: {}
         };
 
-        // --- פונקציות ליבה ---
+        // --- Core Functions ---
+
         function init() {
-            const saved = localStorage.getItem('railwaySchedulerStateV2');
-            if (saved) state = JSON.parse(saved);
+            const saved = localStorage.getItem('railway_pro_state_v3');
+            if (saved) {
+                state = JSON.parse(saved);
+            }
             
             document.getElementById('start-date').value = state.startDate;
-            document.getElementById('header-date').innerText = new Date().toLocaleDateString('he-IL');
+            document.getElementById('header-date').innerText = new Date().toLocaleDateString('he-IL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-            const iSel = document.getElementById('anchor-insp');
-            const sSel = document.getElementById('anchor-station');
-            iSel.innerHTML = inspectorsDB.map(i => `<option>${i.name}</option>`).join('');
-            sSel.innerHTML = stationsDB.map(s => `<option>${s.name}</option>`).join('');
+            // Populate Selects
+            document.getElementById('anchor-insp').innerHTML = inspectorsDB.map(i => `<option>${i.name}</option>`).join('');
+            document.getElementById('anchor-station').innerHTML = stationsDB.map(s => `<option>${s.name}</option>`).join('');
+            document.getElementById('gantt-day-filter').innerHTML = days.map((d, i) => `<option value="${i}">${d}</option>`).join('');
 
-            renderConstraintsTable();
-            renderAnchorsList();
-            if(state.schedule.length) {
-                renderScheduleTable();
-                renderStationsKPI();
-                renderGanttFilters();
-                updateDashboardStats();
-            }
+            refreshUI();
         }
 
         function save() {
             state.startDate = document.getElementById('start-date').value;
-            localStorage.setItem('railwaySchedulerStateV2', JSON.stringify(state));
+            localStorage.setItem('railway_pro_state_v3', JSON.stringify(state));
+        }
+
+        function refreshUI() {
+            renderConstraintsTable();
+            renderAnchorsList();
+            renderScheduleTable();
+            renderStationsKPI();
+            updateDashboardStats();
+            renderGanttHeader();
+            renderGantt();
         }
 
         function resetSystem() {
-            if(confirm("לאפס הכל?")) { localStorage.removeItem('railwaySchedulerStateV2'); location.reload(); }
+            if (confirm("האם אתה בטוח שברצונך למחוק את כל הנתונים והשיבוצים?")) {
+                localStorage.removeItem('railway_pro_state_v3');
+                location.reload();
+            }
         }
 
         function showTab(id) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-            event.target.classList.add('active');
-            if(id === 'gantt') renderGantt();
+            document.getElementById('btn-' + id).classList.add('active');
+            if (id === 'gantt') renderGantt();
         }
 
-        // --- אלגוריתם שיבוץ (עם תיקון לולאה אינסופית) ---
+        // --- Logic Engine ---
+
         function generateSchedule() {
             state.schedule = [];
+            // Reset counts for the new simulation
             stationsDB.forEach(s => state.stationCounts[s.name] = 0);
+            
             const startObj = new Date(document.getElementById('start-date').value);
 
             for (let dIdx = 0; dIdx < 7; dIdx++) {
-                const dateStr = new Date(startObj.getTime() + dIdx*86400000).toISOString().split('T')[0];
+                const currentDate = new Date(startObj.getTime() + dIdx * 86400000);
+                const dateStr = currentDate.toISOString().split('T')[0];
 
                 inspectorsDB.forEach(insp => {
+                    // Check Leave/Sick
                     if (state.constraints[`${insp.name}_${dateStr}`]) return;
 
                     let currentTime = insp.shift === "בוקר" ? "06:00" : "14:00";
@@ -236,28 +324,27 @@
                     let currentLoc = insp.start;
                     
                     const dayAnchors = state.anchors
-                        .filter(a => a.inspector === insp.name && a.dayIndex === dIdx)
-                        .sort((a,b) => a.time.localeCompare(b.time));
+                        .filter(a => a.inspector === insp.name && parseInt(a.dayIndex) === dIdx)
+                        .sort((a, b) => a.time.localeCompare(b.time));
 
-                    let safetyNet = 0; // הגנה מלולאה אינסופית
+                    let safetyNet = 0;
 
-                    while (currentTime < shiftEnd && safetyNet < 50) {
+                    while (currentTime < shiftEnd && safetyNet < 60) {
                         safetyNet++;
                         
                         const nextAnchor = dayAnchors.find(a => a.time >= currentTime);
                         
-                        // בדיקת לחץ זמן לעוגן
                         if (nextAnchor) {
                             const travelToAnchor = calcTravel(currentLoc, nextAnchor.station);
-                            const tToA = timeDiff(currentTime, nextAnchor.time);
+                            const tToA = timeDiffMinutes(currentTime, nextAnchor.time);
                             
                             if (tToA <= travelToAnchor + 10) {
-                                if(currentLoc !== nextAnchor.station) {
+                                if (currentLoc !== nextAnchor.station) {
                                     addJob(dIdx, dateStr, insp.name, "ניוד לעוגן", nextAnchor.station, currentTime, travelToAnchor, "travel");
                                     currentTime = addMinutes(currentTime, travelToAnchor);
                                 }
-                                if(currentTime < nextAnchor.time) {
-                                    addJob(dIdx, dateStr, insp.name, "המתנה לעוגן", nextAnchor.station, currentTime, timeDiff(currentTime, nextAnchor.time), "admin");
+                                if (currentTime < nextAnchor.time) {
+                                    addJob(dIdx, dateStr, insp.name, "המתנה", nextAnchor.station, currentTime, timeDiffMinutes(currentTime, nextAnchor.time), "admin");
                                     currentTime = nextAnchor.time;
                                 }
                                 addJob(dIdx, dateStr, insp.name, "עוגן ידני", nextAnchor.station, currentTime, 45, "anchor");
@@ -268,17 +355,16 @@
                             }
                         }
 
-                        // שיבוץ רגיל
-                        let nextSt = findBest(currentLoc);
+                        let nextSt = findBestStation(currentLoc);
                         const travel = calcTravel(currentLoc, nextSt.name);
-                        const totalNeeded = travel + 35; // נסיעה + זמן בקרה מינימלי
+                        const totalNeeded = travel + 35; 
 
                         if (nextAnchor && addMinutes(currentTime, totalNeeded) > nextAnchor.time) {
-                            // אין זמן למשימה שלמה לפני העוגן
-                            addJob(dIdx, dateStr, insp.name, "מנהלה/המתנה", currentLoc, currentTime, 15, "admin");
-                            currentTime = addMinutes(currentTime, 15);
+                            const waitTime = 15;
+                            addJob(dIdx, dateStr, insp.name, "מנהלה", currentLoc, currentTime, waitTime, "admin");
+                            currentTime = addMinutes(currentTime, waitTime);
                         } else {
-                            if(travel > 5) {
+                            if (travel > 5) {
                                 addJob(dIdx, dateStr, insp.name, "נסיעה", nextSt.name, currentTime, travel, "travel");
                                 currentTime = addMinutes(currentTime, travel);
                             }
@@ -290,27 +376,24 @@
                     }
                     
                     if (currentTime < shiftEnd) {
-                        addJob(dIdx, dateStr, insp.name, "סגירת משמרת", "קצה", currentTime, timeDiff(currentTime, shiftEnd), "admin");
+                        addJob(dIdx, dateStr, insp.name, "סגירת משמרת", "קצה", currentTime, timeDiffMinutes(currentTime, shiftEnd), "admin");
                     }
                 });
             }
             save();
-            renderScheduleTable();
-            renderStationsKPI();
-            renderGanttFilters();
-            updateDashboardStats();
+            refreshUI();
             showTab('gantt');
+            alert("השיבוץ הושלם ונשמר בהצלחה!");
         }
 
-        // --- עזרי חישוב ---
-        function findBest(curr) {
+        function findBestStation(curr) {
             let best = null, min = Infinity;
-            const cSt = stationsDB.find(s => s.name === curr) || stationsDB[0]; // מניעת קריסה אם המיקום הוא "משרד"
+            const currentStationData = stationsDB.find(s => s.name === curr) || stationsDB[0];
             stationsDB.forEach(s => {
-                if(s.name === curr) return;
-                const d = Math.abs(s.geo - cSt.geo);
-                const score = d * 2 + (state.stationCounts[s.name] || 0) * 10;
-                if(score < min) { min = score; best = s; }
+                if (s.name === curr) return;
+                const dist = Math.abs(s.geo - currentStationData.geo);
+                const score = dist * 2.5 + (state.stationCounts[s.name] || 0) * 12;
+                if (score < min) { min = score; best = s; }
             });
             return best;
         }
@@ -318,73 +401,95 @@
         function calcTravel(l1, l2) {
             const s1 = stationsDB.find(s => s.name === l1);
             const s2 = stationsDB.find(s => s.name === l2);
-            if(!s1 || !s2) return 10;
-            return Math.abs(s1.geo - s2.geo) * 3 + 5;
+            if (!s1 || !s2) return 10;
+            return Math.abs(s1.geo - s2.geo) * 3 + 6;
         }
 
         function addMinutes(t, m) {
             const [h, min] = t.split(':').map(Number);
-            const d = new Date(0,0,0, h, min + m);
-            return d.toTimeString().substring(0,5);
+            const d = new Date(0, 0, 0, h, min + m);
+            return d.toTimeString().substring(0, 5);
         }
 
-        function timeDiff(t1, t2) {
+        function timeDiffMinutes(t1, t2) {
             const [h1, m1] = t1.split(':').map(Number);
             const [h2, m2] = t2.split(':').map(Number);
-            return (h2*60 + m2) - (h1*60 + m1);
+            return (h2 * 60 + m2) - (h1 * 60 + m1);
         }
 
         function addJob(dIdx, date, insp, task, loc, start, dur, type) {
-            if(dur <= 0) return;
+            if (dur <= 0) return;
             state.schedule.push({ dIdx, date, inspector: insp, task, loc, start, dur, type, end: addMinutes(start, dur) });
         }
 
-        // --- רינדור ממשק ---
+        // --- Render UI ---
+
         function renderConstraintsTable() {
             const tbody = document.getElementById('constraints-body');
+            const startObj = new Date(state.startDate);
             tbody.innerHTML = inspectorsDB.map(insp => {
-                let row = `<tr class="border-b"><td class="p-2 font-bold text-right bg-white sticky left-0">${insp.name}</td>`;
-                for(let i=0; i<7; i++) {
-                    const date = new Date(new Date(state.startDate).getTime() + i*86400000).toISOString().split('T')[0];
+                let row = `<tr class="hover:bg-slate-50 transition-colors"><td class="p-3 font-bold text-right bg-white sticky left-0 border-l">${insp.name}</td>`;
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(startObj.getTime() + i * 86400000).toISOString().split('T')[0];
                     const key = `${insp.name}_${date}`;
-                    row += `<td class="p-2 border-l"><input type="checkbox" ${state.constraints[key]?'checked':''} onchange="updateConst('${insp.name}','${date}',this.checked)"></td>`;
+                    row += `<td class="p-3 border-l">
+                                <input type="checkbox" class="w-5 h-5 accent-blue-600 cursor-pointer" ${state.constraints[key] ? 'checked' : ''} 
+                                onchange="updateConst('${insp.name}','${date}',this.checked)">
+                            </td>`;
                 }
                 return row + `</tr>`;
             }).join('');
         }
 
         function updateConst(name, date, val) {
-            if(val) state.constraints[`${name}_${date}`] = 'sick';
+            if (val) state.constraints[`${name}_${date}`] = 'sick';
             else delete state.constraints[`${name}_${date}`];
             save();
+            updateDashboardStats();
         }
 
         function addAnchor() {
+            const time = document.getElementById('anchor-time').value;
+            if (!time) return alert("נא להזין שעה");
             state.anchors.push({
                 id: Date.now(),
                 inspector: document.getElementById('anchor-insp').value,
-                dayIndex: parseInt(document.getElementById('anchor-day').value),
-                time: document.getElementById('anchor-time').value,
+                dayIndex: document.getElementById('anchor-day').value,
+                time: time,
                 station: document.getElementById('anchor-station').value
             });
-            save(); renderAnchorsList();
+            save();
+            renderAnchorsList();
+        }
+
+        function removeAnchor(id) {
+            state.anchors = state.anchors.filter(a => a.id !== id);
+            save();
+            renderAnchorsList();
         }
 
         function renderAnchorsList() {
             document.getElementById('anchors-list').innerHTML = state.anchors.map(a => `
-                <div class="bg-purple-100 p-1 px-2 rounded text-[10px] flex gap-2">
-                    ${a.inspector} | ${days[a.dayIndex]} ${a.time} | <button onclick="removeAnchor(${a.id})" class="text-red-600 font-bold">X</button>
+                <div class="bg-purple-50 text-purple-700 border border-purple-200 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2">
+                    ⚓ ${a.inspector} | ${days[a.dayIndex]} ${a.time} | ${a.station}
+                    <button onclick="removeAnchor(${a.id})" class="text-purple-400 hover:text-red-500 font-bold ml-1">✕</button>
                 </div>
             `).join('');
         }
 
-        function removeAnchor(id) { state.anchors = state.anchors.filter(a => a.id !== id); save(); renderAnchorsList(); }
-
         function renderScheduleTable() {
             document.getElementById('schedule-body').innerHTML = state.schedule.map(j => `
-                <tr class="border-b ${j.type==='travel'?'bg-slate-50 italic':''}">
-                    <td class="p-2 text-xs">${days[j.dIdx]}</td><td class="p-2 font-bold">${j.inspector}</td>
-                    <td class="p-2">${j.task}</td><td class="p-2">${j.loc}</td><td class="p-2 font-mono">${j.start}-${j.end}</td>
+                <tr class="hover:bg-slate-50 transition-colors ${j.type === 'travel' ? 'bg-slate-50/50 italic text-slate-500' : ''}">
+                    <td class="p-3 font-bold text-slate-400">${days[j.dIdx]}</td>
+                    <td class="p-3 font-bold text-slate-800">${j.inspector}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${j.type === 'anchor' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100'}">
+                            ${j.task}
+                        </span>
+                    </td>
+                    <td class="p-3">${j.loc}</td>
+                    <td class="p-3 font-mono font-bold">${j.start} - ${j.end}</td>
+                    <td class="p-3 text-[10px] font-bold text-slate-400 uppercase">${j.type}</td>
                 </tr>
             `).join('');
         }
@@ -392,45 +497,107 @@
         function renderStationsKPI() {
             const alertBox = document.getElementById('dashboard-alerts');
             alertBox.innerHTML = "";
+            let lowKPI = false;
+
             document.getElementById('stations-body').innerHTML = stationsDB.map(st => {
                 const act = state.stationCounts[st.name] || 0;
-                const pct = Math.min(100, Math.round((act/st.target)*100));
-                if(pct < 80) alertBox.innerHTML += `<div class="bg-red-50 p-1 text-[10px] border-b">${st.name}: ${act}/${st.target}</div>`;
-                return `<tr class="border-b ${pct<80?'kpi-alert':''}">
-                    <td class="p-3 font-bold">${st.name}</td><td class="p-3 text-center">${st.target}</td>
-                    <td class="p-3 text-center font-black">${act}</td>
-                    <td class="p-3"><div class="w-full bg-gray-200 h-2 rounded"><div class="bg-green-600 h-2 rounded" style="width:${pct}%"></div></div></td>
+                const pct = Math.min(100, Math.round((act / st.target) * 100));
+                
+                if (pct < 70) {
+                    lowKPI = true;
+                    alertBox.innerHTML += `<div class="bg-red-50 p-2 rounded-lg border border-red-100 text-[11px] text-red-700 font-bold mb-1">תחנת ${st.name} בפיגור: ${act}/${st.target}</div>`;
+                }
+
+                return `<tr class="${pct < 70 ? 'bg-red-50/30' : ''}">
+                    <td class="p-4 font-bold text-slate-700">${st.name}</td>
+                    <td class="p-4 text-center text-slate-400">${st.target}</td>
+                    <td class="p-4 text-center font-black text-slate-800">${act}</td>
+                    <td class="p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-grow bg-slate-200 h-2 rounded-full overflow-hidden">
+                                <div class="h-full ${pct < 40 ? 'bg-red-500' : pct < 80 ? 'bg-amber-500' : 'bg-green-500'} transition-all duration-1000" style="width:${pct}%"></div>
+                            </div>
+                            <span class="text-[10px] font-bold text-slate-500 w-8">${pct}%</span>
+                        </div>
+                    </td>
                 </tr>`;
             }).join('');
+
+            if (!lowKPI && state.schedule.length > 0) alertBox.innerHTML = `<p class="text-green-600 font-bold text-sm">✓ כל התחנות עומדות ביעד!</p>`;
         }
 
-        function renderGanttFilters() {
-            document.getElementById('gantt-day-filter').innerHTML = days.map((d,i) => `<option value="${i}">${d}</option>`).join('');
+        // --- Improved Gantt Chart ---
+
+        function renderGanttHeader() {
+            const header = document.getElementById('gantt-header');
+            header.innerHTML = `<div class="gantt-label bg-slate-200 border-l-2 border-slate-300">בקר / שעה</div>`;
+            for (let h = 6; h <= 23; h++) {
+                header.innerHTML += `<div class="flex-grow text-center text-[10px] font-bold text-slate-500 py-2 border-r border-slate-300 min-w-[80px]">${h < 10 ? '0' + h : h}:00</div>`;
+            }
         }
 
         function renderGantt() {
             const dIdx = parseInt(document.getElementById('gantt-day-filter').value);
             const area = document.getElementById('gantt-area');
-            const pxMin = 1.5;
+            const pxPerMin = 1.333; // (80px per hour / 60)
+            
             area.innerHTML = inspectorsDB.map(insp => {
                 const tasks = state.schedule.filter(s => s.dIdx === dIdx && s.inspector === insp.name);
-                return `<div class="gantt-row"><div class="gantt-label">${insp.name}</div><div class="gantt-timeline">
-                    ${tasks.map(t => {
-                        const [h,m] = t.start.split(':').map(Number);
-                        const left = ((h*60 + m) - 360) * pxMin;
-                        const width = t.dur * pxMin;
-                        let color = "bg-blue-600";
-                        if(t.type==='travel') color="bg-amber-400";
-                        if(t.type==='admin') color="bg-slate-400";
-                        if(t.type==='anchor') color="bg-purple-600";
-                        return `<div class="gantt-block ${color}" style="left:${left}px; width:${width}px" title="${t.task}">${t.dur>15?t.loc:''}</div>`;
-                    }).join('')}
-                </div></div>`;
+                const date = new Date(new Date(state.startDate).getTime() + dIdx * 86400000).toISOString().split('T')[0];
+                const isOff = state.constraints[`${insp.name}_${date}`];
+
+                let row = `<div class="gantt-row ${isOff ? 'bg-red-50/50 opacity-60' : ''}">
+                             <div class="gantt-label">${insp.name}</div>
+                             <div class="gantt-timeline">`;
+
+                // Add grid lines for hours
+                for (let i = 0; i <= 17; i++) {
+                    row += `<div class="gantt-grid-line" style="left: ${i * 80}px"></div>`;
+                }
+
+                if (isOff) {
+                    row += `<div class="absolute inset-0 flex items-center justify-center text-red-500 font-bold text-[10px] italic">חופש / מחלה</div>`;
+                } else {
+                    row += tasks.map(t => {
+                        const [h, m] = t.start.split(':').map(Number);
+                        const left = ((h * 60 + m) - 360) * pxPerMin;
+                        const width = t.dur * pxPerMin;
+                        
+                        let colorClass = "bg-admin";
+                        if (t.type === 'inspection') colorClass = "bg-inspection";
+                        if (t.type === 'travel') colorClass = "bg-travel";
+                        if (t.type === 'anchor') colorClass = "bg-anchor";
+
+                        return `<div class="gantt-block ${colorClass}" 
+                                     style="left:${left}px; width:${width}px" 
+                                     title="${t.task} | ${t.start}-${t.end}">
+                                    <span class="font-bold truncate w-full text-center">${width > 40 ? t.loc : ''}</span>
+                                    <span class="time-tag">${width > 60 ? t.start : ''}</span>
+                                </div>`;
+                    }).join('');
+                }
+                return row + `</div></div>`;
             }).join('');
         }
 
-        function updateDashboardStats() { document.getElementById('stat-total-jobs').innerText = state.schedule.length; }
+        function updateDashboardStats() {
+            document.getElementById('stat-total-jobs').innerText = state.schedule.length;
+        }
 
+        function exportCSV() {
+            if (state.schedule.length === 0) return alert("אין לו\"ז לייצוא");
+            let csv = "\uFEFFיום,בקר,משימה,מיקום,התחלה,סיום\n";
+            state.schedule.forEach(j => {
+                csv += `${days[j.dIdx]},${j.inspector},${j.task},${j.loc},${j.start},${j.end}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Railway_Schedule_${state.startDate}.csv`;
+            link.click();
+        }
+
+        // Initialize Application
         window.onload = init;
     </script>
 </body>

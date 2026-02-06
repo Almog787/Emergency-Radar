@@ -3,678 +3,557 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>R-Light Pro - Ultimate</title>
+    <title>R-Light Pro - Stable Core</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&display=swap');
         
-        /* --- CSS Variables for Theming --- */
         :root {
-            --bg-body: #f8fafc;
-            --bg-card: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --gantt-bg: #ffffff;
-            --gantt-grid: #f1f5f9;
+            --bg-body: #f1f5f9; --bg-card: #ffffff; --text-main: #0f172a;
+            --border-color: #cbd5e1; --primary: #2563eb;
             --gantt-line: #e2e8f0;
         }
 
         [data-theme="dark"] {
-            --bg-body: #0f172a;
-            --bg-card: #1e293b;
-            --text-main: #f1f5f9;
-            --text-muted: #94a3b8;
-            --border-color: #334155;
-            --primary: #3b82f6;
-            --primary-hover: #60a5fa;
-            --gantt-bg: #1e293b;
-            --gantt-grid: #334155;
-            --gantt-line: #475569;
+            --bg-body: #0f172a; --bg-card: #1e293b; --text-main: #f8fafc;
+            --border-color: #334155; --primary: #3b82f6;
+            --gantt-line: #334155;
         }
 
-        body { 
-            font-family: 'Assistant', sans-serif; 
-            background-color: var(--bg-body); 
-            color: var(--text-main); 
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            transition: all 0.3s;
-        }
-
-        /* --- Animations --- */
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        .nav-btn.active { 
-            border-bottom: 4px solid var(--primary); 
-            color: var(--primary); 
-            font-weight: 800; 
-            background-color: rgba(59, 130, 246, 0.1); 
-        }
+        body { font-family: 'Assistant', sans-serif; background-color: var(--bg-body); color: var(--text-main); transition: all 0.2s; }
+        .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         
-        /* --- Gantt Styles --- */
-        .gantt-container { overflow-x: auto; position: relative; background: var(--gantt-bg); border-radius: 0.75rem; border: 1px solid var(--border-color); }
-        .gantt-header { display: flex; border-bottom: 2px solid var(--border-color); background: var(--bg-body); position: sticky; top: 0; z-index: 20; }
-        .gantt-row { display: flex; border-bottom: 1px solid var(--gantt-line); height: 60px; align-items: center; position: relative; }
-        .gantt-label { width: 160px; flex-shrink: 0; font-weight: bold; padding: 0 1rem; position: sticky; right: 0; background: var(--bg-card); z-index: 10; border-left: 2px solid var(--border-color); color: var(--text-main); }
+        /* Utility */
+        .hidden { display: none; }
+        .tab-btn.active { border-bottom: 3px solid var(--primary); color: var(--primary); font-weight: 800; background: rgba(37,99,235,0.05); }
         
-        .gantt-timeline { position: relative; flex-grow: 1; min-width: 1440px; height: 100%; background: repeating-linear-gradient(90deg, transparent, transparent 79px, var(--gantt-grid) 80px); }
+        /* Gantt Specifics */
+        .gantt-wrapper { overflow-x: auto; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 0.5rem; position: relative; }
+        .gantt-header { display: flex; position: sticky; top: 0; z-index: 20; background: var(--bg-body); border-bottom: 1px solid var(--border-color); }
+        .gantt-row { display: flex; height: 50px; position: relative; border-bottom: 1px solid var(--gantt-line); align-items: center; }
+        .gantt-label { width: 140px; flex-shrink: 0; position: sticky; right: 0; background: var(--bg-card); z-index: 10; border-left: 2px solid var(--border-color); font-weight: bold; padding: 0 10px; font-size: 0.85rem; }
+        .gantt-timeline { position: relative; flex-grow: 1; min-width: 1080px; height: 100%; }
         
-        .gantt-block { 
-            position: absolute; height: 70%; top: 15%; border-radius: 6px; 
-            font-size: 11px; display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            color: white; cursor: grab; box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
-            z-index: 1; border: 1px solid rgba(255,255,255,0.2); select-none: none;
+        .gantt-block {
+            position: absolute; height: 70%; top: 15%; border-radius: 4px;
+            font-size: 10px; color: white; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; white-space: nowrap; cursor: grab; z-index: 1;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2); user-select: none;
         }
-        .gantt-block:active { cursor: grabbing; cursor: -webkit-grabbing; transform: scale(1.02); z-index: 50; }
+        .gantt-block:active { cursor: grabbing; transform: scale(1.02); z-index: 50; }
         
-        /* Conflict Visuals */
-        .conflict { 
-            background: repeating-linear-gradient(45deg, #ef4444, #ef4444 10px, #b91c1c 10px, #b91c1c 20px) !important;
-            border: 2px solid #fff;
-            animation: pulseRed 1.5s infinite;
-            z-index: 40 !important;
-        }
-        @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        /* Conflict Animation */
+        .conflict { background: repeating-linear-gradient(45deg, #ef4444, #ef4444 10px, #b91c1c 10px, #b91c1c 20px) !important; animation: flash 1s infinite; }
+        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
 
         /* Colors */
-        .bg-inspection { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
-        .bg-travel { background: linear-gradient(135deg, #f59e0b, #d97706); }
-        .bg-anchor { background: linear-gradient(135deg, #9333ea, #7e22ce); }
-        .bg-admin { background: linear-gradient(135deg, #64748b, #475569); }
-
-        /* Dark Mode Input Fixes */
-        [data-theme="dark"] input, [data-theme="dark"] select {
-            background-color: #334155;
-            border-color: #475569;
-            color: white;
-        }
+        .bg-insp { background: #3b82f6; } .bg-travel { background: #f59e0b; }
+        .bg-anchor { background: #8b5cf6; } .bg-admin { background: #64748b; }
     </style>
 </head>
 <body data-theme="light">
 
-    <!-- Header -->
-    <header class="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="bg-blue-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-xl">R</div>
-                <div>
-                    <h1 class="text-xl font-black tracking-wider italic">R-LIGHT <span class="text-blue-400">PRO</span></h1>
-                    <p class="text-[10px] text-slate-400 opacity-80">v4.0 | שיבוץ חכם, גיבויים וגאנט דינמי</p>
-                </div>
-            </div>
-            
-            <div class="flex items-center gap-3">
-                <!-- Theme Toggle -->
-                <button onclick="toggleTheme()" class="p-2 rounded-full bg-slate-700 hover:bg-slate-600 transition" title="מצב כהה/בהיר">
-                    🌗
-                </button>
-                
-                <!-- Backups -->
-                <button onclick="showBackupsModal()" class="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-lg text-xs font-bold transition">
-                    <span>↺</span> שחזור גיבוי
-                </button>
-
-                <button onclick="resetSystem()" class="bg-red-600/80 hover:bg-red-600 px-3 py-2 rounded-lg text-xs font-bold transition">
-                    אפס מערכת
-                </button>
-            </div>
+    <!-- Navbar -->
+    <header class="bg-slate-900 text-white p-3 shadow-md sticky top-0 z-50 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <h1 class="font-black italic text-lg tracking-wide">R-LIGHT <span class="text-blue-400">STABLE v5</span></h1>
+        </div>
+        <div class="flex gap-2 text-xs">
+            <button onclick="toggleTheme()" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded transition">🌓 ערכת נושא</button>
+            <button onclick="hardReset()" class="bg-red-600 hover:bg-red-500 px-3 py-1.5 rounded transition font-bold">⚠️ איפוס מלא</button>
         </div>
     </header>
 
-    <!-- Navigation -->
-    <nav class="bg-card border-b border-color sticky top-[72px] z-40 shadow-sm">
-        <div class="container mx-auto flex overflow-x-auto">
-            <button onclick="showTab('dashboard')" id="btn-dashboard" class="nav-btn active flex-1 py-4 px-6 font-bold text-slate-500 transition-all whitespace-nowrap">לוח בקרה</button>
-            <button onclick="showTab('gantt')" id="btn-gantt" class="nav-btn flex-1 py-4 px-6 font-bold text-slate-500 transition-all whitespace-nowrap">גאנט (עריכה חיה)</button>
-            <button onclick="showTab('constraints')" id="btn-constraints" class="nav-btn flex-1 py-4 px-6 font-bold text-slate-500 transition-all whitespace-nowrap">אילוצים</button>
-            <button onclick="showTab('schedule')" id="btn-schedule" class="nav-btn flex-1 py-4 px-6 font-bold text-slate-500 transition-all whitespace-nowrap">טבלה</button>
-            <button onclick="showTab('stations')" id="btn-stations" class="nav-btn flex-1 py-4 px-6 font-bold text-slate-500 transition-all whitespace-nowrap">סטטוס</button>
-        </div>
+    <nav class="bg-card border-b border-color sticky top-[52px] z-40 flex overflow-x-auto shadow-sm">
+        <button onclick="switchTab('dashboard')" id="btn-dashboard" class="tab-btn active flex-1 py-3 px-4 text-sm font-bold transition whitespace-nowrap">לוח בקרה</button>
+        <button onclick="switchTab('gantt')" id="btn-gantt" class="tab-btn flex-1 py-3 px-4 text-sm font-bold transition whitespace-nowrap">גאנט (עריכה)</button>
+        <button onclick="switchTab('data')" id="btn-data" class="tab-btn flex-1 py-3 px-4 text-sm font-bold transition whitespace-nowrap">טבלה ונתונים</button>
+        <button onclick="switchTab('settings')" id="btn-settings" class="tab-btn flex-1 py-3 px-4 text-sm font-bold transition whitespace-nowrap">אילוצים</button>
     </nav>
 
-    <main class="container mx-auto p-4 min-h-screen">
-
-        <!-- Backups Modal -->
-        <div id="backups-modal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center backdrop-blur-sm">
-            <div class="card w-full max-w-md p-6 rounded-2xl shadow-2xl">
-                <h3 class="text-xl font-bold mb-4 flex justify-between">
-                    היסטוריית גרסאות
-                    <button onclick="document.getElementById('backups-modal').classList.add('hidden')" class="text-slate-400 hover:text-red-500">✕</button>
-                </h3>
-                <div id="backups-list" class="space-y-2 max-h-[300px] overflow-y-auto"></div>
-                <p class="text-xs text-muted mt-4 italic">המערכת שומרת אוטומטית גרסה לפני כל הרצת שיבוץ.</p>
-            </div>
-        </div>
-
-        <!-- Tab: Dashboard -->
-        <div id="dashboard" class="tab-content active space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Control -->
-                <div class="card p-6 rounded-2xl shadow-sm">
-                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">🚀 הרצת שיבוץ</h2>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="text-xs font-bold text-muted block mb-1">תאריך התחלה:</label>
-                            <input type="date" id="start-date" class="w-full p-3 border rounded-xl outline-none transition-all">
-                        </div>
-                        <button onclick="runGenerator()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg transition-all transform active:scale-95">
-                            בצע שיבוץ חכם
-                        </button>
-                    </div>
+    <main class="container mx-auto p-4 max-w-7xl min-h-screen">
+        
+        <!-- DASHBOARD -->
+        <div id="tab-dashboard" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="card p-5">
+                    <h2 class="font-bold text-lg mb-2">⚡ מחולל שיבוץ</h2>
+                    <p class="text-xs text-gray-500 mb-3">לחיצה תמחק את השיבוץ הקיים ותיצור חדש.</p>
+                    <label class="block text-xs font-bold mb-1">תאריך התחלה:</label>
+                    <input type="date" id="start-date" class="w-full border p-2 rounded mb-3 bg-gray-50 text-black">
+                    <button onclick="runEngine()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded shadow transition">בצע שיבוץ שבועי</button>
+                </div>
+                
+                <div class="card p-5">
+                    <h2 class="font-bold text-lg mb-2 text-red-600">🚨 סטטוס מערכת</h2>
+                    <div id="sys-status" class="text-sm bg-gray-100 p-2 rounded h-24 overflow-y-auto text-gray-700">ממתין לפעולה...</div>
                 </div>
 
-                <!-- Alerts -->
-                <div class="card p-6 rounded-2xl shadow-sm">
-                    <h2 class="text-xl font-bold mb-4 text-red-500 flex items-center gap-2">⚠️ התראות וקונפליקטים</h2>
-                    <div id="conflict-alerts" class="space-y-2 max-h-[180px] overflow-y-auto text-sm">
-                        <p class="text-muted italic">אין קונפליקטים כרגע.</p>
-                    </div>
-                </div>
-
-                <!-- Stats -->
-                <div class="card p-6 rounded-2xl shadow-sm flex flex-col justify-center items-center text-center bg-slate-800 text-white border-none">
-                    <div class="text-5xl font-black text-blue-400 mb-2" id="stat-total-jobs">0</div>
-                    <div class="text-sm uppercase tracking-widest text-slate-400 font-bold">משימות שובצו</div>
+                <div class="card p-5 flex flex-col justify-center items-center bg-slate-800 text-white">
+                    <div class="text-4xl font-black text-blue-400" id="total-tasks">0</div>
+                    <div class="text-xs uppercase tracking-widest opacity-70">משימות נוצרו</div>
                 </div>
             </div>
         </div>
 
-        <!-- Tab: Gantt (Drag & Drop) -->
-        <div id="gantt" class="tab-content space-y-4">
-            <div class="card p-4 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-4">
-                <div>
-                    <h2 class="text-xl font-bold">תרשים גאנט אינטראקטיבי</h2>
-                    <p class="text-xs text-muted">גרור משימות לשינוי זמנים. קונפליקטים יסומנו באדום.</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <label class="text-xs font-bold text-muted">יום:</label>
-                    <select id="gantt-day-filter" onchange="renderGantt()" class="border p-2 rounded-xl font-bold text-blue-600 outline-none"></select>
-                </div>
-            </div>
-
-            <div class="gantt-container shadow-xl">
-                <div class="gantt-header" id="gantt-header"></div>
-                <div id="gantt-area" class="divide-y divide-slate-100 dark:divide-slate-700"></div>
+        <!-- GANTT -->
+        <div id="tab-gantt" class="hidden space-y-4">
+            <div class="flex justify-between items-center card p-3">
+                <h2 class="font-bold">תרשים גאנט (Drag & Drop)</h2>
+                <select id="gantt-day" onchange="renderGantt()" class="border p-1 rounded font-bold text-blue-600 bg-white text-black"></select>
             </div>
             
-            <div class="flex flex-wrap gap-4 justify-center mt-4 text-xs font-bold text-muted">
-                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-inspection"></div> בקרה</div>
-                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-travel"></div> נסיעה</div>
-                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-anchor"></div> עוגן</div>
-                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-red-500 border border-white"></div> התנגשות</div>
+            <div class="gantt-wrapper shadow-lg">
+                <div id="gantt-header" class="gantt-header"></div>
+                <div id="gantt-body"></div>
+            </div>
+
+            <div class="flex flex-wrap gap-3 justify-center text-xs font-bold text-gray-500">
+                <span class="flex items-center gap-1"><i class="w-3 h-3 rounded bg-insp"></i> בקרה</span>
+                <span class="flex items-center gap-1"><i class="w-3 h-3 rounded bg-travel"></i> נסיעה</span>
+                <span class="flex items-center gap-1"><i class="w-3 h-3 rounded bg-anchor"></i> עוגן</span>
+                <span class="flex items-center gap-1"><i class="w-3 h-3 rounded bg-admin"></i> מנהלה</span>
+                <span class="flex items-center gap-1"><i class="w-3 h-3 rounded conflict"></i> התנגשות</span>
             </div>
         </div>
 
-        <!-- Tab: Constraints -->
-        <div id="constraints" class="tab-content space-y-6">
-            <div class="card rounded-2xl overflow-hidden">
-                <div class="p-4 bg-slate-100 dark:bg-slate-800 border-b border-color font-bold">🏥 ניהול היעדרויות</div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-center text-sm">
-                        <thead class="bg-slate-900 text-white">
-                            <tr><th class="p-4 text-right">שם הבקר</th><th class="p-4">א'</th><th class="p-4">ב'</th><th class="p-4">ג'</th><th class="p-4">ד'</th><th class="p-4">ה'</th><th class="p-4">ו'</th><th class="p-4">ש'</th></tr>
+        <!-- DATA TABLES -->
+        <div id="tab-data" class="hidden space-y-6">
+            <div class="card overflow-hidden">
+                <div class="p-3 bg-slate-100 dark:bg-slate-800 font-bold border-b border-color flex justify-between">
+                    <span>📋 טבלת שיבוץ מלאה</span>
+                    <button onclick="exportCSV()" class="text-xs bg-slate-700 text-white px-2 py-1 rounded">Excel Export</button>
+                </div>
+                <div class="overflow-x-auto max-h-[400px]">
+                    <table class="w-full text-sm text-right">
+                        <thead class="bg-slate-800 text-white sticky top-0">
+                            <tr><th class="p-3">יום</th><th class="p-3">בקר</th><th class="p-3">משימה</th><th class="p-3">מיקום</th><th class="p-3">שעות</th></tr>
                         </thead>
-                        <tbody id="constraints-body" class="divide-y divide-color"></tbody>
+                        <tbody id="schedule-body" class="divide-y divide-color"></tbody>
                     </table>
                 </div>
             </div>
 
-            <div class="card p-6 rounded-2xl">
-                <h3 class="text-lg font-bold mb-4">⚓ הוספת עוגן ידני</h3>
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-                    <select id="anchor-insp" class="w-full border p-2.5 rounded-lg outline-none"></select>
-                    <select id="anchor-day" class="w-full border p-2.5 rounded-lg outline-none">
+            <div class="card overflow-hidden">
+                <div class="p-3 bg-slate-100 dark:bg-slate-800 font-bold border-b border-color">📊 יעדי תחנות (KPI)</div>
+                <table class="w-full text-sm text-right">
+                    <thead class="bg-slate-200 dark:bg-slate-900 text-gray-700 dark:text-gray-200">
+                        <tr><th class="p-3">תחנה</th><th class="p-3 text-center">יעד</th><th class="p-3 text-center">בוצע</th><th class="p-3 w-1/3">בר</th></tr>
+                    </thead>
+                    <tbody id="kpi-body" class="divide-y divide-color"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div id="tab-settings" class="hidden space-y-6">
+            <div class="card p-4">
+                <h3 class="font-bold mb-3">⚓ הוספת עוגן ידני</h3>
+                <div class="flex flex-wrap gap-2 items-end">
+                    <select id="anc-insp" class="border p-2 rounded bg-white text-black text-sm"></select>
+                    <select id="anc-day" class="border p-2 rounded bg-white text-black text-sm">
                         <option value="0">ראשון</option><option value="1">שני</option><option value="2">שלישי</option><option value="3">רביעי</option><option value="4">חמישי</option><option value="5">שישי</option><option value="6">שבת</option>
                     </select>
-                    <input type="time" id="anchor-time" class="w-full border p-2.5 rounded-lg outline-none">
-                    <select id="anchor-station" class="w-full border p-2.5 rounded-lg outline-none"></select>
-                    <button onclick="addAnchor()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-lg transition-all">הוסף</button>
+                    <input type="time" id="anc-time" class="border p-2 rounded bg-white text-black text-sm">
+                    <select id="anc-station" class="border p-2 rounded bg-white text-black text-sm"></select>
+                    <button onclick="addAnchor()" class="bg-purple-600 text-white px-4 py-2 rounded text-sm font-bold">הוסף</button>
                 </div>
-                <div id="anchors-list" class="mt-4 flex flex-wrap gap-2"></div>
+                <div id="anchor-list" class="mt-4 flex flex-wrap gap-2"></div>
+            </div>
+
+            <div class="card overflow-hidden">
+                <div class="p-3 bg-slate-100 dark:bg-slate-800 font-bold">🏥 היעדרויות</div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-center text-sm">
+                        <thead class="bg-slate-900 text-white"><tr><th class="p-3 text-right">בקר</th><th>א</th><th>ב</th><th>ג</th><th>ד</th><th>ה</th><th>ו</th><th>ש</th></tr></thead>
+                        <tbody id="constraints-body" class="divide-y divide-color"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <!-- Tab: Schedule Table -->
-        <div id="schedule" class="tab-content space-y-4">
-            <div class="card p-4 rounded-2xl flex justify-between items-center">
-                <h2 class="text-xl font-bold">טבלת שיבוץ מפורטת</h2>
-                <button onclick="exportCSV()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-700">ייצוא ל-Excel</button>
-            </div>
-            <div class="card rounded-2xl overflow-hidden">
-                <table class="w-full text-right text-sm">
-                    <thead class="bg-slate-900 text-white">
-                        <tr><th class="p-4">יום</th><th class="p-4">בקר</th><th class="p-4">משימה</th><th class="p-4">מיקום</th><th class="p-4">שעות</th></tr>
-                    </thead>
-                    <tbody id="schedule-body" class="divide-y divide-color"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Tab: Stations -->
-        <div id="stations" class="tab-content">
-            <div class="card rounded-2xl overflow-hidden">
-                <table class="w-full text-right text-sm">
-                    <thead class="bg-slate-100 dark:bg-slate-800">
-                        <tr><th class="p-4">תחנה</th><th class="p-4 text-center">יעד</th><th class="p-4 text-center">בוצע</th><th class="p-4 w-1/3">התקדמות</th></tr>
-                    </thead>
-                    <tbody id="stations-body" class="divide-y divide-color"></tbody>
-                </table>
-            </div>
-        </div>
     </main>
 
     <script>
-        // --- Configuration ---
-        const inspectorsDB = [
-            { name: "דניאל אברהם", shift: "בוקר", start: "תמ פת" }, { name: "רונית לוי", shift: "בוקר", start: "הקוממיות" },
-            { name: "יוסי כהן", shift: "בוקר", start: "אליפלט" }, { name: "מיכל שחר", shift: "בוקר", start: "שאול המלך" },
-            { name: "אבי ביטון", shift: "בוקר", start: "בן גוריון" }, { name: "שרה גולן", shift: "בוקר", start: "יוספטל" },
-            { name: "עומר פרץ", shift: "בוקר", start: "קרית אריה" }, { name: "נועה קירל", shift: "בוקר", start: "בלפור" },
-            { name: "אלירן סבג", shift: "ערב", start: "תמ פת" }, { name: "גלית דיסטל", shift: "ערב", start: "הקוממיות" },
-            { name: "משה אשכנזי", shift: "ערב", start: "ארלוזורוב" }, { name: "דנה פרידר", shift: "ערב", start: "אלנבי" },
-            { name: "גיא זו-ארץ", shift: "ערב", start: "קרית אריה" }, { name: "רותם סלע", shift: "ערב", start: "יפו" },
-            { name: "אסי עזר", shift: "ערב", start: "שאול המלך" }
+        /**
+         * STABLE CORE V5.0
+         * Uses Integer Math (Minutes) instead of Strings to prevent infinite loops.
+         * Optimized Rendering (innerHTML once).
+         */
+
+        // --- Data ---
+        const inspectors = [
+            {n:"דניאל אברהם", s:"morning", base:"תמ פת"}, {n:"רונית לוי", s:"morning", base:"הקוממיות"},
+            {n:"יוסי כהן", s:"morning", base:"אליפלט"}, {n:"מיכל שחר", s:"morning", base:"שאול המלך"},
+            {n:"אבי ביטון", s:"morning", base:"בן גוריון"}, {n:"שרה גולן", s:"morning", base:"יוספטל"},
+            {n:"עומר פרץ", s:"morning", base:"קרית אריה"}, {n:"נועה קירל", s:"morning", base:"בלפור"},
+            {n:"אלירן סבג", s:"evening", base:"תמ פת"}, {n:"גלית דיסטל", s:"evening", base:"הקוממיות"},
+            {n:"משה אשכנזי", s:"evening", base:"ארלוזורוב"}, {n:"דנה פרידר", s:"evening", base:"אלנבי"},
+            {n:"גיא זו-ארץ", s:"evening", base:"קרית אריה"}, {n:"רותם סלע", s:"evening", base:"יפו"},
+            {n:"אסי עזר", s:"evening", base:"שאול המלך"}
         ];
 
-        const stationsDB = [
-            { name: "תמ פת", geo: 1, target: 20 }, { name: "פינסקר", geo: 2, target: 20 }, { name: "קרית אריה", geo: 4, target: 25 },
-            { name: "שנקר", geo: 6, target: 20 }, { name: "אהרונוביץ", geo: 9, target: 30 }, { name: "בן גוריון", geo: 11, target: 30 },
-            { name: "ביאליק", geo: 12, target: 30 }, { name: "ארלוזורוב", geo: 14, target: 35 }, { name: "שאול המלך", geo: 15, target: 35 },
-            { name: "קרליבך", geo: 17, target: 30 }, { name: "אלנבי", geo: 18, target: 30 }, { name: "אליפלט", geo: 19, target: 25 },
-            { name: "בלומפילד", geo: 21, target: 20 }, { name: "יפו", geo: 23, target: 20 }, { name: "יוספטל", geo: 28, target: 25 },
-            { name: "בלפור", geo: 30, target: 25 }, { name: "בנימין", geo: 31, target: 25 }, { name: "הקוממיות", geo: 34, target: 25 }
+        const stations = [
+            {n:"תמ פת",g:1,t:20}, {n:"פינסקר",g:2,t:20}, {n:"קרית אריה",g:4,t:25}, {n:"שנקר",g:6,t:20},
+            {n:"אהרונוביץ",g:9,t:30}, {n:"בן גוריון",g:11,t:30}, {n:"ביאליק",g:12,t:30}, {n:"ארלוזורוב",g:14,t:35},
+            {n:"שאול המלך",g:15,t:35}, {n:"קרליבך",g:17,t:30}, {n:"אלנבי",g:18,t:30}, {n:"אליפלט",g:19,t:25},
+            {n:"בלומפילד",g:21,t:20}, {n:"יפו",g:23,t:20}, {n:"יוספטל",g:28,t:25}, {n:"בלפור",g:30,t:25},
+            {n:"בנימין",g:31,t:25}, {n:"הקוממיות",g:34,t:25}
         ];
 
-        const days = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
-        
-        // --- State Management ---
-        let state = {
+        const days = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
+
+        let appData = {
             startDate: new Date().toISOString().split('T')[0],
-            schedule: [],
-            constraints: {},
+            tasks: [],
+            constraints: {}, // "Name_Date": true
             anchors: [],
-            stationCounts: {},
-            backups: [], // New: Backup Array
             theme: 'light'
         };
 
         // --- Init ---
-        function init() {
-            const saved = localStorage.getItem('railway_pro_v4');
-            if (saved) state = JSON.parse(saved);
-            
-            // Set Theme
-            document.body.setAttribute('data-theme', state.theme || 'light');
-            
-            // Init Inputs
-            document.getElementById('start-date').value = state.startDate;
-            
-            // Populate Selects
-            document.getElementById('anchor-insp').innerHTML = inspectorsDB.map(i => `<option>${i.name}</option>`).join('');
-            document.getElementById('anchor-station').innerHTML = stationsDB.map(s => `<option>${s.name}</option>`).join('');
-            document.getElementById('gantt-day-filter').innerHTML = days.map((d, i) => `<option value="${i}">${d}</option>`).join('');
+        window.onload = () => {
+            try {
+                const saved = localStorage.getItem('rail_stable_v5');
+                if(saved) appData = JSON.parse(saved);
+                
+                document.getElementById('start-date').value = appData.startDate;
+                document.body.setAttribute('data-theme', appData.theme);
+                
+                // Fill Selects
+                const inspOpts = inspectors.map(i=>`<option>${i.n}</option>`).join('');
+                const stOpts = stations.map(s=>`<option>${s.n}</option>`).join('');
+                const dayOpts = days.map((d,i)=>`<option value="${i}">${d}</option>`).join('');
+                
+                document.getElementById('anc-insp').innerHTML = inspOpts;
+                document.getElementById('anc-station').innerHTML = stOpts;
+                document.getElementById('gantt-day').innerHTML = dayOpts;
 
-            refreshUI();
-        }
-
-        function save() {
-            state.startDate = document.getElementById('start-date').value;
-            localStorage.setItem('railway_pro_v4', JSON.stringify(state));
-            refreshUI();
-        }
-
-        // --- Core Features: Backups & Theme ---
-        
-        function toggleTheme() {
-            state.theme = state.theme === 'light' ? 'dark' : 'light';
-            document.body.setAttribute('data-theme', state.theme);
-            save();
-        }
-
-        function createBackup(note = "גיבוי אוטומטי") {
-            const backup = {
-                id: Date.now(),
-                date: new Date().toLocaleString('he-IL'),
-                note: note,
-                data: JSON.parse(JSON.stringify(state)) // Deep copy
-            };
-            // Limit to last 5 backups
-            state.backups.unshift(backup);
-            if(state.backups.length > 5) state.backups.pop();
-        }
-
-        function showBackupsModal() {
-            const list = document.getElementById('backups-list');
-            list.innerHTML = state.backups.map(b => `
-                <div class="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700 rounded-lg border border-color">
-                    <div class="text-sm">
-                        <div class="font-bold">${b.date}</div>
-                        <div class="text-xs text-muted">${b.note}</div>
-                    </div>
-                    <button onclick="restoreBackup(${b.id})" class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-1 rounded font-bold hover:bg-blue-200">שחזר</button>
-                </div>
-            `).join('');
-            if(state.backups.length === 0) list.innerHTML = '<div class="text-center text-muted p-4">אין גיבויים זמינים</div>';
-            document.getElementById('backups-modal').classList.remove('hidden');
-        }
-
-        function restoreBackup(id) {
-            const backup = state.backups.find(b => b.id === id);
-            if(backup && confirm("האם לשחזר לגרסה מ-" + backup.date + "?")) {
-                // Keep backups array, restore everything else
-                const currentBackups = state.backups;
-                state = JSON.parse(JSON.stringify(backup.data));
-                state.backups = currentBackups;
-                save();
-                location.reload();
+                renderAll();
+            } catch (e) {
+                console.error("Init Error", e);
+                hardReset();
             }
+        };
+
+        function saveData() {
+            appData.startDate = document.getElementById('start-date').value;
+            localStorage.setItem('rail_stable_v5', JSON.stringify(appData));
         }
 
-        // --- Logic Engine (Simplified for brevity but functional) ---
-        function runGenerator() {
-            createBackup("לפני הרצת שיבוץ חדש"); // Create Backup
-            state.schedule = [];
-            stationsDB.forEach(s => state.stationCounts[s.name] = 0);
+        // --- Core Engine (Integer Math) ---
+        function runEngine() {
+            const status = document.getElementById('sys-status');
+            status.innerHTML = "🔄 מעבד...";
             
-            const startObj = new Date(document.getElementById('start-date').value);
-
-            for (let d = 0; d < 7; d++) {
-                const dateStr = new Date(startObj.getTime() + d * 86400000).toISOString().split('T')[0];
-
-                inspectorsDB.forEach(insp => {
-                    if (state.constraints[`${insp.name}_${dateStr}`]) return;
+            // Allow UI to update before freezing for calc
+            setTimeout(() => {
+                try {
+                    appData.tasks = []; // Clear old
+                    const startDt = new Date(document.getElementById('start-date').value);
                     
-                    let time = insp.shift === "בוקר" ? "06:00" : "14:00";
-                    let end = insp.shift === "בוקר" ? "14:30" : "22:30";
-                    let loc = insp.start;
+                    // Pre-calculate counts map
+                    let counts = {};
+                    stations.forEach(s => counts[s.n] = 0);
 
-                    // Anchors
-                    const dayAnchors = state.anchors.filter(a => a.inspector === insp.name && parseInt(a.dayIndex) === d).sort((a,b)=>a.time.localeCompare(b.time));
-
-                    let safety = 0;
-                    while(time < end && safety < 60) {
-                        safety++;
+                    // Loop 7 days
+                    for(let d=0; d<7; d++) {
+                        const dateStr = new Date(startDt.getTime() + d*86400000).toISOString().split('T')[0];
                         
-                        // Check Anchor proximity
-                        const nextAnc = dayAnchors.find(a => a.time >= time);
-                        if(nextAnc) {
-                            const travel = calcTravel(loc, nextAnc.station);
-                            const tDiff = timeDiff(time, nextAnc.time);
-                            if(tDiff <= travel + 10) {
-                                if(loc !== nextAnc.station) {
-                                    addTask(d, dateStr, insp.name, "ניוד", nextAnc.station, time, travel, "travel");
-                                    time = addMin(time, travel);
-                                }
-                                if(time < nextAnc.time) {
-                                    addTask(d, dateStr, insp.name, "המתנה", nextAnc.station, time, timeDiff(time, nextAnc.time), "admin");
-                                    time = nextAnc.time;
-                                }
-                                addTask(d, dateStr, insp.name, "עוגן", nextAnc.station, time, 45, "anchor");
-                                state.stationCounts[nextAnc.station]++;
-                                time = addMin(time, 45);
-                                loc = nextAnc.station;
-                                continue;
-                            }
-                        }
+                        inspectors.forEach(insp => {
+                            if(appData.constraints[`${insp.n}_${dateStr}`]) return; // Skip if sick
 
-                        // Regular
-                        let nextSt = findBest(loc);
-                        let trvl = calcTravel(loc, nextSt.name);
-                        
-                        if(nextAnc && addMin(time, trvl+35) > nextAnc.time) {
-                            addTask(d, dateStr, insp.name, "המתנה", loc, time, 15, "admin");
-                            time = addMin(time, 15);
-                        } else {
-                            if(trvl > 5) {
-                                addTask(d, dateStr, insp.name, "נסיעה", nextSt.name, time, trvl, "travel");
-                                time = addMin(time, trvl);
+                            // Convert times to minutes (06:00 = 360)
+                            let time = insp.s === "morning" ? 360 : 840; // 06:00 or 14:00
+                            const end = insp.s === "morning" ? 870 : 1350; // 14:30 or 22:30
+                            let loc = insp.base;
+
+                            // Get daily anchors sorted by time
+                            const dailyAncs = appData.anchors
+                                .filter(a => a.insp === insp.n && parseInt(a.day) === d)
+                                .map(a => ({...a, mins: timeToMins(a.timeStr)}))
+                                .sort((a,b) => a.mins - b.mins);
+
+                            let safety = 0;
+                            while(time < end && safety < 50) {
+                                safety++;
+                                
+                                // 1. Check Anchors
+                                const nextAnc = dailyAncs.find(a => a.mins >= time);
+                                if(nextAnc) {
+                                    const travel = getTravel(loc, nextAnc.stat);
+                                    if(time + travel + 15 >= nextAnc.mins) {
+                                        // Must go to anchor
+                                        if(loc !== nextAnc.stat) {
+                                            pushTask(d, dateStr, insp.n, "ניוד", nextAnc.stat, time, travel, "travel");
+                                            time += travel;
+                                        }
+                                        if(time < nextAnc.mins) {
+                                            pushTask(d, dateStr, insp.n, "המתנה", nextAnc.stat, time, nextAnc.mins - time, "admin");
+                                            time = nextAnc.mins;
+                                        }
+                                        pushTask(d, dateStr, insp.n, "עוגן", nextAnc.stat, time, 45, "anchor");
+                                        counts[nextAnc.stat]++;
+                                        time += 45;
+                                        loc = nextAnc.stat;
+                                        continue;
+                                    }
+                                }
+
+                                // 2. Regular Logic
+                                const nextSt = findBest(loc, counts);
+                                const travel = getTravel(loc, nextSt.n);
+                                
+                                // If enough time before anchor
+                                if(nextAnc && time + travel + 30 > nextAnc.mins) {
+                                    pushTask(d, dateStr, insp.n, "המתנה", loc, time, 15, "admin");
+                                    time += 15;
+                                } else {
+                                    if(travel > 5) {
+                                        pushTask(d, dateStr, insp.n, "נסיעה", nextSt.n, time, travel, "travel");
+                                        time += travel;
+                                    }
+                                    pushTask(d, dateStr, insp.n, "בקרת תחנה", nextSt.n, time, 30, "insp");
+                                    counts[nextSt.n]++;
+                                    time += 30;
+                                    loc = nextSt.n;
+                                }
                             }
-                            addTask(d, dateStr, insp.name, "בקרת תחנה", nextSt.name, time, 30, "inspection");
-                            state.stationCounts[nextSt.name]++;
-                            time = addMin(time, 30);
-                            loc = nextSt.name;
+
+                            // Fill rest
+                            if(time < end) {
+                                pushTask(d, dateStr, insp.n, "סגירה", "משרד", time, end-time, "admin");
+                            }
+                        });
+                    }
+                    
+                    saveData();
+                    renderAll();
+                    status.innerHTML = `<span class="text-green-600 font-bold">✓ שיבוץ הושלם בהצלחה!</span>`;
+                    switchTab('gantt');
+
+                } catch (e) {
+                    status.innerHTML = `<span class="text-red-600 font-bold">❌ שגיאה: ${e.message}</span>`;
+                    console.error(e);
+                }
+            }, 50);
+        }
+
+        function findBest(currLoc, counts) {
+            let best = stations[0], min = Infinity;
+            const cGeo = stations.find(s=>s.n===currLoc)?.g || 1;
+            
+            stations.forEach(s => {
+                if(s.n === currLoc) return;
+                // Score: Distance * 2 + Visits * 10. Low is better.
+                const score = Math.abs(s.g - cGeo)*2 + (counts[s.n]||0)*10;
+                if(score < min) { min = score; best = s; }
+            });
+            return best;
+        }
+
+        function getTravel(l1, l2) {
+            const s1 = stations.find(s=>s.n===l1), s2 = stations.find(s=>s.n===l2);
+            if(!s1 || !s2) return 15; // Safe default
+            return Math.abs(s1.g - s2.g)*3 + 5;
+        }
+
+        function pushTask(dIdx, date, insp, typeName, loc, startMins, dur, typeCode) {
+            if(dur <= 0) return;
+            appData.tasks.push({
+                id: Date.now() + Math.random(),
+                dIdx, date, insp, task: typeName, loc,
+                start: startMins, dur, type: typeCode,
+                end: startMins + dur
+            });
+        }
+
+        // --- Rendering ---
+        function renderAll() {
+            renderGantt();
+            renderTable();
+            renderStats();
+            renderConstraints();
+            renderAnchors();
+            document.getElementById('total-tasks').innerText = appData.tasks.length;
+        }
+
+        function renderGantt() {
+            const dayIdx = parseInt(document.getElementById('gantt-day').value);
+            const header = document.getElementById('gantt-header');
+            const body = document.getElementById('gantt-body');
+            
+            // Header (06:00 - 23:00)
+            const pxPerMin = 1.2; 
+            const startHour = 6;
+            
+            let headHtml = `<div class="gantt-label flex items-center bg-slate-100 dark:bg-slate-800">בקר</div>`;
+            for(let h=6; h<=23; h++) {
+                headHtml += `<div style="flex:0 0 72px; text-align:center; font-size:10px; border-right:1px solid var(--border-color);">${h}:00</div>`;
+            }
+            header.innerHTML = headHtml;
+
+            // Body
+            const dateStr = new Date(new Date(appData.startDate).getTime() + dayIdx*86400000).toISOString().split('T')[0];
+            
+            body.innerHTML = inspectors.map(i => {
+                const isSick = appData.constraints[`${i.n}_${dateStr}`];
+                const tasks = appData.tasks.filter(t => t.dIdx === dayIdx && t.insp === i.n);
+                
+                // Conflicts check
+                const conflictIds = [];
+                for(let x=0; x<tasks.length; x++) {
+                    for(let y=x+1; y<tasks.length; y++) {
+                        if(tasks[x].start < tasks[y].end && tasks[x].end > tasks[y].start) {
+                            conflictIds.push(tasks[x].id, tasks[y].id);
                         }
                     }
-                    if(time < end) addTask(d, dateStr, insp.name, "סגירה", "משרד", time, timeDiff(time, end), "admin");
-                });
-            }
-            save();
-            showTab('gantt');
-        }
+                }
 
-        function findBest(curr) {
-            let best=null, min=Infinity;
-            const cGeo = stationsDB.find(s=>s.name===curr)?.geo || 1;
-            stationsDB.forEach(s => {
-                if(s.name===curr) return;
-                let score = Math.abs(s.geo - cGeo)*2 + (state.stationCounts[s.name]||0)*10;
-                if(score<min) { min=score; best=s; }
-            });
-            return best || stationsDB[0];
-        }
-
-        function calcTravel(l1,l2) {
-            const s1=stationsDB.find(s=>s.name===l1), s2=stationsDB.find(s=>s.name===l2);
-            return (s1&&s2) ? Math.abs(s1.geo - s2.geo)*3+5 : 10;
-        }
-
-        function addTask(idx, date, insp, task, loc, start, dur, type) {
-            state.schedule.push({ 
-                id: Date.now() + Math.random(), // Unique ID for DragDrop
-                dIdx: idx, date, inspector: insp, task, loc, start, dur, type, end: addMin(start, dur) 
-            });
-        }
-
-        function addMin(t, m) {
-            let [h,n] = t.split(':').map(Number);
-            return new Date(0,0,0,h,n+m).toTimeString().substring(0,5);
-        }
-        function timeDiff(t1,t2) {
-            let [h1,m1] = t1.split(':').map(Number);
-            let [h2,m2] = t2.split(':').map(Number);
-            return (h2*60+m2)-(h1*60+m1);
-        }
-
-        // --- Render UI ---
-        function refreshUI() {
-            renderConstraintsTable();
-            renderAnchorsList();
-            renderScheduleTable();
-            renderStationsKPI();
-            document.getElementById('stat-total-jobs').innerText = state.schedule.length;
-            renderGantt();
-        }
-
-        // --- Gantt Drag & Drop Logic ---
-        
-        function renderGantt() {
-            const dIdx = parseInt(document.getElementById('gantt-day-filter').value);
-            const header = document.getElementById('gantt-header');
-            const area = document.getElementById('gantt-area');
-            
-            // Render Header
-            header.innerHTML = `<div class="gantt-label bg-slate-100 dark:bg-slate-800">בקר / שעה</div>`;
-            for(let h=6; h<=23; h++) header.innerHTML += `<div class="flex-grow text-center text-[10px] font-bold text-muted border-r border-color min-w-[80px]">${h}:00</div>`;
-
-            // Render Rows
-            const pxPerMin = 1.333; // 80px / 60min
-            area.innerHTML = inspectorsDB.map(insp => {
-                const date = new Date(new Date(state.startDate).getTime() + dIdx*86400000).toISOString().split('T')[0];
-                const isOff = state.constraints[`${insp.name}_${date}`];
-                const tasks = state.schedule.filter(s => s.dIdx === dIdx && s.inspector === insp.name);
+                let html = `<div class="gantt-row ${isSick?'bg-red-50 opacity-50':''}" 
+                            ondragover="allowDrop(event)" ondrop="onDrop(event, '${i.n}', ${dayIdx})">
+                            <div class="gantt-label flex items-center h-full">${i.n}</div>
+                            <div class="gantt-timeline">`;
                 
-                let rowHtml = `<div class="gantt-row ${isOff?'bg-red-50/20':''}" ondragover="handleDragOver(event)" ondrop="handleDrop(event, '${insp.name}', ${dIdx})">
-                    <div class="gantt-label">${insp.name}</div>
-                    <div class="gantt-timeline">`;
-                
-                // Grid lines
-                for(let i=0; i<=18; i++) rowHtml += `<div class="absolute h-full border-r border-color border-dashed pointer-events-none" style="left:${i*80}px"></div>`;
+                // Grid
+                for(let x=0; x<=17; x++) html += `<div style="position:absolute; left:${x*72}px; height:100%; border-right:1px dashed var(--gantt-line);"></div>`;
 
-                if(!isOff) {
-                    // Check conflicts
-                    const conflicts = checkConflicts(tasks);
-
-                    rowHtml += tasks.map(t => {
-                        let [h,m] = t.start.split(':').map(Number);
-                        let left = ((h*60+m) - 360) * pxPerMin;
-                        let width = t.dur * pxPerMin;
-                        let bg = t.type === 'travel' ? 'bg-travel' : t.type==='anchor' ? 'bg-anchor' : t.type==='inspection' ? 'bg-inspection' : 'bg-admin';
-                        if(conflicts.includes(t.id)) bg = "conflict"; // Red Pulse
-
+                if(!isSick) {
+                    html += tasks.map(t => {
+                        const left = (t.start - 360) * pxPerMin;
+                        const width = t.dur * pxPerMin;
+                        const bg = conflictIds.includes(t.id) ? 'conflict' : `bg-${t.type}`;
+                        
                         return `<div class="gantt-block ${bg}" 
-                                style="left:${left}px; width:${width}px;" 
-                                draggable="true" 
-                                ondragstart="handleDragStart(event, ${t.id})"
-                                title="${t.task} (${t.start}-${t.end})">
-                                ${width > 40 ? `<span class="truncate font-bold">${t.loc}</span>` : ''}
-                                ${width > 60 ? `<span class="opacity-80 text-[9px]">${t.start}</span>` : ''}
-                            </div>`;
+                                style="left:${left}px; width:${width}px;"
+                                draggable="true" ondragstart="drag(event, ${t.id})"
+                                title="${t.task} ${minsToTime(t.start)}-${minsToTime(t.end)}">
+                                ${width>30 ? t.loc : ''}
+                                </div>`;
                     }).join('');
                 } else {
-                    rowHtml += `<div class="absolute inset-0 flex items-center justify-center text-red-400 font-bold italic">יום חופש / מחלה</div>`;
+                    html += `<div class="absolute inset-0 flex items-center justify-center text-red-500 font-bold text-xs">חופש</div>`;
                 }
 
-                return rowHtml + `</div></div>`;
+                return html + `</div></div>`;
             }).join('');
-
-            checkAllConflicts();
         }
 
-        // -- Drag Drop Handlers --
-        let draggedTaskId = null;
+        // --- Drag & Drop ---
+        let draggedId = null;
+        function drag(ev, id) { draggedId = id; }
+        function allowDrop(ev) { ev.preventDefault(); }
+        function onDrop(ev, newInsp, dIdx) {
+            ev.preventDefault();
+            const task = appData.tasks.find(t => t.id === draggedId);
+            if(!task) return;
 
-        function handleDragStart(e, id) {
-            draggedTaskId = id;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', id); // For Firefox
-        }
-
-        function handleDragOver(e) {
-            e.preventDefault(); // Necessary for Drop
-            e.dataTransfer.dropEffect = 'move';
-        }
-
-        function handleDrop(e, newInspName, dIdx) {
-            e.preventDefault();
-            const task = state.schedule.find(t => t.id === draggedTaskId);
-            if (!task) return;
-
-            // Calculate new time based on drop position X
-            const rect = e.currentTarget.querySelector('.gantt-timeline').getBoundingClientRect();
-            const offsetX = e.clientX - rect.left + e.currentTarget.scrollLeft; // Account for scroll
-            const pxPerMin = 1.333;
+            const rect = ev.currentTarget.querySelector('.gantt-timeline').getBoundingClientRect();
+            const x = ev.clientX - rect.left + ev.currentTarget.scrollLeft;
+            const pxPerMin = 1.2;
             
-            const totalMins = offsetX / pxPerMin;
-            const newStartMins = 360 + totalMins; // Start from 06:00 (360 mins)
+            // Calc new start (snap to 15m)
+            let newStart = 360 + (x / pxPerMin);
+            newStart = Math.round(newStart / 15) * 15;
             
-            // Round to nearest 5 mins
-            const roundedMins = Math.round(newStartMins / 5) * 5;
-            
-            const h = Math.floor(roundedMins / 60);
-            const m = Math.round(roundedMins % 60);
-            const newTimeStr = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
-
-            // Update Task
-            task.start = newTimeStr;
-            task.end = addMin(newTimeStr, task.dur);
-            task.inspector = newInspName; // Allow moving between inspectors
+            task.insp = newInsp;
             task.dIdx = dIdx;
-
-            save(); // Saves and Re-renders Gantt
-        }
-
-        function checkConflicts(tasks) {
-            let ids = [];
-            for(let i=0; i<tasks.length; i++) {
-                for(let j=i+1; j<tasks.length; j++) {
-                    let t1 = tasks[i], t2 = tasks[j];
-                    if(t1.start < t2.end && t1.end > t2.start) {
-                        ids.push(t1.id, t2.id);
-                    }
-                }
-            }
-            return ids;
-        }
-
-        function checkAllConflicts() {
-            const alertBox = document.getElementById('conflict-alerts');
-            alertBox.innerHTML = '';
-            let found = false;
+            task.start = newStart;
+            task.end = newStart + task.dur;
             
-            // Group by Day and Inspector
-            for(let d=0; d<7; d++) {
-                inspectorsDB.forEach(insp => {
-                    const tasks = state.schedule.filter(s => s.dIdx === d && s.inspector === insp.name);
-                    const conflicts = checkConflicts(tasks);
-                    if(conflicts.length > 0) {
-                        found = true;
-                        alertBox.innerHTML += `<div class="text-red-500 font-bold border-b border-slate-100 pb-1">⚠️ התנגשות: ${insp.name} ביום ${days[d]}</div>`;
-                    }
-                });
-            }
-            if(!found) alertBox.innerHTML = `<p class="text-green-500 font-bold text-sm">✓ הלו"ז תקין</p>`;
+            saveData();
+            renderAll();
         }
 
-        // --- Standard Renders ---
-        function renderConstraintsTable() {
-            const startObj = new Date(state.startDate);
-            document.getElementById('constraints-body').innerHTML = inspectorsDB.map(insp => {
-                let row = `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition"><td class="p-3 text-right bg-card sticky left-0 font-bold border-l border-color">${insp.name}</td>`;
-                for(let i=0; i<7; i++) {
-                    const date = new Date(startObj.getTime() + i*86400000).toISOString().split('T')[0];
-                    row += `<td class="p-3 border-l border-color"><input type="checkbox" class="w-5 h-5 accent-blue-600" ${state.constraints[`${insp.name}_${date}`]?'checked':''} onchange="updateConst('${insp.name}','${date}',this.checked)"></td>`;
-                }
-                return row + `</tr>`;
-            }).join('');
-        }
-        function updateConst(n,d,v) { if(v) state.constraints[`${n}_${d}`]='sick'; else delete state.constraints[`${n}_${d}`]; save(); }
-        
-        function addAnchor() {
-            const t = document.getElementById('anchor-time').value;
-            if(!t) return;
-            state.anchors.push({id:Date.now(), inspector:document.getElementById('anchor-insp').value, dayIndex:document.getElementById('anchor-day').value, time:t, station:document.getElementById('anchor-station').value});
-            save(); renderAnchorsList();
-        }
-        function renderAnchorsList() {
-            document.getElementById('anchors-list').innerHTML = state.anchors.map(a => `<div class="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-100 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2">⚓ ${a.inspector} ${days[a.dayIndex]} ${a.time} <button onclick="removeAnchor(${a.id})" class="hover:text-red-500">✕</button></div>`).join('');
-        }
-        function removeAnchor(id) { state.anchors = state.anchors.filter(a=>a.id!==id); save(); renderAnchorsList(); }
-
-        function renderScheduleTable() {
-            document.getElementById('schedule-body').innerHTML = state.schedule.map(j => `
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition border-b border-color">
-                    <td class="p-3 text-muted font-bold">${days[j.dIdx]}</td><td class="p-3 font-bold">${j.inspector}</td><td class="p-3">${j.task}</td><td class="p-3 text-muted">${j.loc}</td><td class="p-3 font-mono">${j.start}-${j.end}</td>
+        // --- Tables ---
+        function renderTable() {
+            const html = appData.tasks.map(t => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-color">
+                    <td class="p-2">${days[t.dIdx]}</td><td class="p-2 font-bold">${t.insp}</td>
+                    <td class="p-2">${t.task}</td><td class="p-2">${t.loc}</td>
+                    <td class="p-2 font-mono">${minsToTime(t.start)}-${minsToTime(t.end)}</td>
                 </tr>`).join('');
+            document.getElementById('schedule-body').innerHTML = html;
         }
 
-        function renderStationsKPI() {
-            document.getElementById('stations-body').innerHTML = stationsDB.map(st => {
-                const act = state.stationCounts[st.name] || 0;
-                const pct = Math.min(100, Math.round((act/st.target)*100));
+        function renderStats() {
+            const counts = {};
+            stations.forEach(s => counts[s.n]=0);
+            appData.tasks.forEach(t => { if(t.type==='insp' && counts[t.loc]!==undefined) counts[t.loc]++; });
+
+            document.getElementById('kpi-body').innerHTML = stations.map(s => {
+                const act = counts[s.n];
+                const pct = Math.min(100, Math.round((act/s.t)*100));
                 return `<tr class="border-b border-color">
-                    <td class="p-4 font-bold">${st.name}</td><td class="p-4 text-center text-muted">${st.target}</td><td class="p-4 text-center font-black">${act}</td>
-                    <td class="p-4"><div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden"><div class="h-full ${pct<70?'bg-red-500':pct<100?'bg-amber-500':'bg-green-500'}" style="width:${pct}%"></div></div></td>
+                    <td class="p-2 font-bold">${s.n}</td><td class="p-2 text-center text-gray-400">${s.t}</td>
+                    <td class="p-2 text-center font-bold">${act}</td>
+                    <td class="p-2"><div class="w-full h-2 bg-gray-200 rounded"><div style="width:${pct}%" class="h-full rounded ${pct<80?'bg-red-500':'bg-green-500'}"></div></div></td>
                 </tr>`;
             }).join('');
         }
-        
-        function exportCSV() {
-            let csv = "\uFEFFיום,בקר,משימה,מיקום,התחלה,סיום\n" + state.schedule.map(j => `${days[j.dIdx]},${j.inspector},${j.task},${j.loc},${j.start},${j.end}`).join('\n');
-            const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'})); link.download="schedule.csv"; link.click();
+
+        function renderConstraints() {
+            const startT = new Date(appData.startDate).getTime();
+            document.getElementById('constraints-body').innerHTML = inspectors.map(i => {
+                let html = `<tr class="border-b border-color hover:bg-slate-50 dark:hover:bg-slate-800"><td class="p-2 font-bold text-right bg-card sticky left-0 border-l border-color">${i.n}</td>`;
+                for(let d=0; d<7; d++) {
+                    const date = new Date(startT + d*86400000).toISOString().split('T')[0];
+                    const k = `${i.n}_${date}`;
+                    html += `<td class="p-2 border-l border-color"><input type="checkbox" ${appData.constraints[k]?'checked':''} onchange="toggleConst('${k}')"></td>`;
+                }
+                return html + `</tr>`;
+            }).join('');
+        }
+        function toggleConst(k) { 
+            if(appData.constraints[k]) delete appData.constraints[k]; else appData.constraints[k]=true; 
+            saveData(); renderGantt(); 
         }
 
-        function resetSystem() { if(confirm("למחוק הכל?")) { localStorage.removeItem('railway_pro_v4'); location.reload(); } }
+        function renderAnchors() {
+            document.getElementById('anchor-list').innerHTML = appData.anchors.map(a => 
+                `<div class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-bold flex gap-2 items-center">
+                    ⚓ ${a.insp} ${days[a.day]} ${a.timeStr}
+                    <button onclick="delAnchor(${a.id})" class="text-red-500">×</button>
+                </div>`
+            ).join('');
+        }
+        function addAnchor() {
+            const t = document.getElementById('anc-time').value;
+            if(!t) return;
+            appData.anchors.push({
+                id: Date.now(),
+                insp: document.getElementById('anc-insp').value,
+                day: document.getElementById('anc-day').value,
+                timeStr: t,
+                stat: document.getElementById('anc-station').value
+            });
+            saveData(); renderAnchors();
+        }
+        function delAnchor(id) { appData.anchors = appData.anchors.filter(a=>a.id!==id); saveData(); renderAnchors(); }
 
-        window.onload = init;
+        // --- Helpers ---
+        function timeToMins(s) { let [h,m]=s.split(':').map(Number); return h*60+m; }
+        function minsToTime(m) { 
+            let h = Math.floor(m/60), n = Math.floor(m%60); 
+            return `${h.toString().padStart(2,'0')}:${n.toString().padStart(2,'0')}`; 
+        }
+        function switchTab(id) {
+            document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${id}`).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(`btn-${id}`).classList.add('active');
+            if(id==='gantt') renderGantt();
+        }
+        function toggleTheme() {
+            appData.theme = appData.theme==='light'?'dark':'light';
+            document.body.setAttribute('data-theme', appData.theme);
+            saveData();
+        }
+        function hardReset() { if(confirm("למחוק הכל?")) { localStorage.removeItem('rail_stable_v5'); location.reload(); } }
+        function exportCSV() {
+            let csv = "\uFEFFיום,בקר,משימה,מיקום,התחלה,סיום\n" + appData.tasks.map(t => `${days[t.dIdx]},${t.insp},${t.task},${t.loc},${minsToTime(t.start)},${minsToTime(t.end)}`).join('\n');
+            const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'})); link.download="schedule.csv"; link.click();
+        }
     </script>
 </body>
 </html>

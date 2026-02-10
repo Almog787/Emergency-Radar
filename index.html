@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Open Bus Live - Stride API</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700&display=swap');
@@ -24,78 +22,52 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-            transition: all 0.5s ease-in-out;
-        }
-        .update-pulse {
-            animation: pulse-blue 1s shadow;
-        }
-        @keyframes pulse-blue {
-            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
         }
     </style>
 </head>
 <body class="bg-gray-100 overflow-hidden">
 
-    <!-- Header -->
     <header class="bg-blue-900 text-white p-4 shadow-lg flex flex-wrap justify-between items-center z-[1001] relative">
         <div class="flex items-center gap-4">
             <h1 class="text-xl font-black italic tracking-tighter text-blue-100">STRIDE <span class="text-blue-400 font-bold">LIVE</span></h1>
-            <div id="status" class="text-xs bg-blue-800 px-3 py-1 rounded-full opacity-80">טוען...</div>
+            <div id="status" class="text-xs bg-blue-800 px-3 py-1 rounded-full">מאתחל...</div>
         </div>
         
         <div class="flex items-center gap-4">
-            <!-- Selector for Refresh Rate -->
             <div class="flex items-center gap-2 bg-blue-800 p-1 px-3 rounded-lg border border-blue-700">
                 <label for="refresh-rate" class="text-xs font-bold text-blue-200">קצב רענון:</label>
                 <select id="refresh-rate" onchange="updateRefreshInterval(this.value)" class="bg-transparent text-white text-sm outline-none font-bold cursor-pointer">
-                    <option value="5000" class="bg-blue-900">5 שניות</option>
-                    <option value="10000" selected class="bg-blue-900">10 שניות</option>
-                    <option value="30000" class="bg-blue-900">30 שניות</option>
-                    <option value="60000" class="bg-blue-900">דקה אחת</option>
+                    <option value="5000">5 שניות</option>
+                    <option value="10000" selected>10 שניות</option>
+                    <option value="30000">30 שניות</option>
                 </select>
             </div>
-            <button onclick="fetchBuses()" class="bg-blue-500 hover:bg-blue-400 text-white px-4 py-1 rounded-lg font-bold text-sm transition-all shadow-md">רענן עכשיו</button>
+            <button onclick="fetchBuses()" class="bg-blue-500 hover:bg-blue-400 text-white px-4 py-1 rounded-lg font-bold text-sm transition-all shadow-md">רענן כעת</button>
         </div>
     </header>
 
     <div class="flex flex-col md:flex-row h-screen">
-        <!-- Sidebar -->
         <aside class="w-full md:w-80 bg-white shadow-xl z-10 overflow-hidden flex flex-col hidden md:flex" style="height: calc(100vh - 80px);">
-            <div class="p-4 border-b bg-gray-50">
-                <h2 class="font-bold text-gray-700">רשימת אוטובוסים (100 האחרונים)</h2>
-                <p id="counter-text" class="text-[10px] text-gray-500 uppercase font-bold tracking-widest mt-1">מציג נתוני אמת</p>
-            </div>
             <div id="bus-list" class="flex-1 overflow-y-auto p-4 space-y-2">
-                <!-- Bus items will be injected here -->
+                <p class="text-gray-400 text-center py-10">ממתין לנתונים...</p>
             </div>
         </aside>
-
-        <!-- Map Container -->
         <div class="flex-1 relative">
             <div id="map"></div>
         </div>
     </div>
 
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // --- מצב המערכת ---
         let busMarkers = {};
         let refreshTimer = null;
-        let currentRate = 10000; // ברירת מחדל 10 שניות
+        let currentRate = 10000;
 
-        // --- אתחול מפה ---
         const map = L.map('map', { zoomControl: false }).setView([32.0853, 34.7818], 12);
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
-        
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // --- GraphQL Query ---
         const STRIDE_QUERY = `
         query {
           siri_vehicle_locations(order_by: {recorded_at_time: desc}, limit: 100) {
@@ -103,7 +75,6 @@
             latitude
             longitude
             recorded_at_time
-            bearing
             velocity
             siri_ride {
               gtfs_ride {
@@ -118,34 +89,44 @@
 
         async function fetchBuses() {
             const statusEl = document.getElementById('status');
-            statusEl.innerText = "מעדכן נתונים...";
+            statusEl.innerText = "מעדכן...";
             
             try {
                 const response = await fetch('https://open-bus-stride-api.hasadna.org.il/graphql', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
                     body: JSON.stringify({ query: STRIDE_QUERY })
                 });
 
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+
                 const result = await response.json();
-                if (!result.data || !result.data.siri_vehicle_locations) throw new Error("No data");
+                
+                if (result.errors) {
+                    console.error("GraphQL Errors:", result.errors);
+                    throw new Error("שגיאה בשאילתה");
+                }
 
                 const buses = result.data.siri_vehicle_locations;
                 updateMap(buses);
                 updateList(buses);
                 
                 statusEl.innerText = `עודכן: ${new Date().toLocaleTimeString('he-IL')}`;
+                statusEl.className = "text-xs bg-green-700 px-3 py-1 rounded-full";
             } catch (error) {
-                console.error("Fetch Error:", error);
-                statusEl.innerText = "שגיאה בחיבור לשרת";
+                console.error("Detailed Error:", error);
+                statusEl.innerText = "שגיאה בחיבור";
+                statusEl.className = "text-xs bg-red-700 px-3 py-1 rounded-full";
             }
         }
 
         function updateMap(buses) {
-            // רשימת ה-IDs הנוכחיים שהגיעו מהשרת
             const currentIds = buses.map(b => b.id);
-
-            // הסרת אוטובוסים שלא קיימים יותר בדו"ח האחרון
             Object.keys(busMarkers).forEach(id => {
                 if (!currentIds.includes(parseInt(id))) {
                     map.removeLayer(busMarkers[id]);
@@ -155,36 +136,18 @@
 
             buses.forEach(bus => {
                 if (!bus.latitude || !bus.longitude) return;
-
                 const routeName = bus.siri_ride?.gtfs_ride?.gtfs_route?.route_short_name || "?";
-                const longName = bus.siri_ride?.gtfs_ride?.gtfs_route?.route_long_name || "לא ידוע";
-                const recordedTime = new Date(bus.recorded_at_time);
-                const delaySeconds = Math.floor((new Date() - recordedTime) / 1000);
-
+                
                 if (busMarkers[bus.id]) {
-                    // עדכון מיקום קיים (אנימציה חלקה אם הדפדפן תומך)
                     busMarkers[bus.id].setLatLng([bus.latitude, bus.longitude]);
                 } else {
-                    // יצירת אייקון חדש
                     const icon = L.divIcon({
                         className: 'bus-icon',
                         html: `<div>${routeName}</div>`,
                         iconSize: [26, 26]
                     });
-
                     const marker = L.marker([bus.latitude, bus.longitude], { icon: icon })
-                        .bindPopup(`
-                            <div class="text-right" dir="rtl">
-                                <h3 class="font-bold text-blue-700">קו ${routeName}</h3>
-                                <p class="text-xs text-gray-600 mb-2">${longName}</p>
-                                <div class="bg-gray-100 p-2 rounded text-[10px] space-y-1">
-                                    <p>🕒 <b>זמן דיווח:</b> ${recordedTime.toLocaleTimeString()}</p>
-                                    <p>⏱️ <b>איחור מהמציאות:</b> ${delaySeconds} שניות</p>
-                                    <p>🚀 <b>מהירות:</b> ${bus.velocity || 0} קמ"ש</p>
-                                </div>
-                            </div>
-                        `);
-
+                        .bindPopup(`קו ${routeName}: ${bus.siri_ride?.gtfs_ride?.gtfs_route?.route_long_name || ''}`);
                     marker.addTo(map);
                     busMarkers[bus.id] = marker;
                 }
@@ -193,50 +156,24 @@
 
         function updateList(buses) {
             const listContainer = document.getElementById('bus-list');
-            listContainer.innerHTML = "";
-
-            buses.forEach(bus => {
-                const routeName = bus.siri_ride?.gtfs_ride?.gtfs_route?.route_short_name || "?";
-                const longName = bus.siri_ride?.gtfs_ride?.gtfs_route?.route_long_name || "לא ידוע";
-                
-                const div = document.createElement('div');
-                div.className = "p-3 bg-white border border-gray-100 rounded-lg shadow-sm hover:border-blue-400 hover:shadow-md cursor-pointer transition-all group";
-                div.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <span class="font-black text-blue-600 text-lg">קו ${routeName}</span>
-                        <span class="text-[10px] text-gray-400 italic">${new Date(bus.recorded_at_time).toLocaleTimeString('he-IL')}</span>
-                    </div>
-                    <div class="text-[11px] text-gray-500 truncate group-hover:text-blue-900">${longName}</div>
-                `;
-                div.onclick = () => {
-                    map.setView([bus.latitude, bus.longitude], 17);
-                    if (busMarkers[bus.id]) busMarkers[bus.id].openPopup();
-                };
-                listContainer.appendChild(div);
-            });
+            listContainer.innerHTML = buses.slice(0, 30).map(bus => `
+                <div class="p-3 bg-white border rounded-lg shadow-sm hover:border-blue-500 cursor-pointer" 
+                     onclick="map.setView([${bus.latitude}, ${bus.longitude}], 16)">
+                    <div class="font-black text-blue-600">קו ${bus.siri_ride?.gtfs_ride?.gtfs_route?.route_short_name || '?'}</div>
+                    <div class="text-[10px] text-gray-500 truncate">${bus.siri_ride?.gtfs_ride?.gtfs_route?.route_long_name || ''}</div>
+                </div>
+            `).join('');
         }
 
-        // --- ניהול קצב רענון ---
         function updateRefreshInterval(val) {
             currentRate = parseInt(val);
-            console.log(`קצב רענון שונה ל: ${currentRate / 1000} שניות`);
-            
-            // איפוס הטיימר הקיים והפעלה מחדש
             if (refreshTimer) clearInterval(refreshTimer);
             refreshTimer = setInterval(fetchBuses, currentRate);
-            
-            // משיכה מיידית כדי שהמשתמש יראה תגובה
             fetchBuses();
         }
 
-        // --- הפעלה ראשונית ---
-        function startApp() {
-            fetchBuses();
-            refreshTimer = setInterval(fetchBuses, currentRate);
-        }
-
-        startApp();
-
+        fetchBuses();
+        refreshTimer = setInterval(fetchBuses, currentRate);
     </script>
 </body>
 </html>

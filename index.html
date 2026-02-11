@@ -3,207 +3,379 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GovData Explorer - סורק המאגרים הממשלתי</title>
+    <title>GovData Pro - פורטל הנתונים הממשלתי</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;800&display=swap');
-        body { font-family: 'Assistant', sans-serif; background-color: #f8fafc; }
-        .sidebar { height: calc(100vh - 64px); }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
-        tr:nth-child(even) { background-color: #f1f5f9; }
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&display=swap');
+        body { font-family: 'Assistant', sans-serif; background-color: #f1f5f9; }
+        .glass-header { background: rgba(30, 58, 138, 0.95); backdrop-filter: blur(10px); }
+        .sidebar { height: calc(100vh - 64px); scrollbar-width: thin; }
+        .data-table-container { max-height: calc(100vh - 350px); overflow: auto; }
+        th { position: sticky; top: 0; background: #f8fafc; z-index: 10; border-bottom: 2px solid #e2e8f0; }
+        .favorite-active { color: #f59e0b !important; }
+        .shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
 <body class="overflow-hidden">
 
-    <!-- Header -->
-    <header class="bg-blue-900 text-white h-16 px-6 flex justify-between items-center shadow-lg relative z-50">
-        <div class="flex items-center gap-3">
-            <i class="fas fa-university text-2xl text-blue-400"></i>
-            <h1 class="text-xl font-black tracking-tight">GOV DATA <span class="text-blue-300 font-light">EXPLORER</span></h1>
+    <!-- Navbar -->
+    <header class="glass-header text-white h-16 px-6 flex justify-between items-center shadow-2xl relative z-50">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
+            <i class="fas fa-chart-line text-2xl text-blue-400"></i>
+            <h1 class="text-xl font-black tracking-tight">GOVDATA <span class="text-blue-300 font-light text-sm">PRO 3.0</span></h1>
         </div>
-        <div class="flex items-center gap-4 flex-1 max-w-2xl px-10">
-            <div class="relative w-full">
-                <input type="text" id="main-search" placeholder="חפש מאגר (למשל: רכב, בתי ספר, טיסות...)" 
-                    class="w-full bg-blue-800 text-white placeholder-blue-300 border-none rounded-full py-2 px-10 focus:ring-2 focus:ring-blue-400 outline-none transition">
+
+        <div class="flex-1 max-w-2xl px-10">
+            <div class="relative group">
+                <input type="text" id="main-search" placeholder="חפש מאגר (למשל: רכב, בתי ספר, תקציב...)" 
+                    class="w-full bg-blue-900/50 text-white placeholder-blue-300 border border-blue-700 rounded-xl py-2 px-10 focus:ring-2 focus:ring-blue-400 focus:bg-blue-800 outline-none transition-all">
                 <i class="fas fa-search absolute right-4 top-3 text-blue-300"></i>
             </div>
         </div>
-        <div class="text-xs text-blue-200 hidden md:block">מבוסס API רשמי data.gov.il</div>
+
+        <div class="flex items-center gap-4">
+            <button onclick="showFavorites()" class="hover:text-amber-400 transition flex items-center gap-2">
+                <i class="fas fa-star"></i>
+                <span class="hidden md:inline text-xs font-bold">מועדפים</span>
+            </button>
+        </div>
     </header>
 
     <div class="flex">
-        <!-- Sidebar: Results List -->
-        <aside class="sidebar w-80 bg-white border-l shadow-inner flex flex-col z-40">
-            <div class="p-4 bg-slate-50 border-b">
-                <h2 class="text-sm font-bold text-slate-600 uppercase">תוצאות חיפוש</h2>
+        <!-- Sidebar -->
+        <aside class="sidebar w-80 bg-white border-l shadow-xl flex flex-col z-40">
+            <!-- Filter Tabs -->
+            <div class="flex border-b text-xs font-bold uppercase text-slate-500">
+                <button onclick="toggleSidebarTab('results')" id="tab-results-btn" class="flex-1 p-3 border-b-2 border-blue-600 text-blue-600">תוצאות</button>
+                <button onclick="toggleSidebarTab('orgs')" id="tab-orgs-btn" class="flex-1 p-3 border-b-2 border-transparent">משרדים</button>
             </div>
-            <div id="datasets-list" class="flex-1 overflow-y-auto custom-scrollbar">
-                <div class="p-10 text-center text-slate-400 italic">הקלד בחיפוש כדי למצוא מאגרי מידע</div>
+
+            <!-- Tab: Results -->
+            <div id="sidebar-results" class="flex-1 overflow-y-auto">
+                <div id="datasets-list" class="divide-y divide-slate-100">
+                    <div class="p-10 text-center text-slate-400 italic">חפש מאגר כדי להתחיל</div>
+                </div>
+            </div>
+
+            <!-- Tab: Orgs -->
+            <div id="sidebar-orgs" class="hidden flex-1 overflow-y-auto">
+                <div id="orgs-list" class="divide-y divide-slate-100">
+                    <!-- Organizations will load here -->
+                </div>
             </div>
         </aside>
 
-        <!-- Main Content: Data View -->
-        <main class="flex-1 bg-slate-100 sidebar overflow-y-auto p-6 custom-scrollbar">
+        <!-- Main Area -->
+        <main class="flex-1 sidebar overflow-y-auto p-6 relative">
+            
+            <!-- Welcome View -->
             <div id="welcome-screen" class="h-full flex flex-col justify-center items-center text-slate-400">
-                <i class="fas fa-database text-6xl mb-4 opacity-20"></i>
-                <p class="text-xl font-bold">בחר מאגר מידע כדי להציג את הנתונים</p>
-                <p class="text-sm">ניתן לחפש קבוצות נתונים של משרדי הממשלה השונים</p>
+                <div class="bg-white p-10 rounded-3xl shadow-sm text-center max-w-md">
+                    <i class="fas fa-university text-6xl mb-6 text-blue-100"></i>
+                    <h2 class="text-2xl font-bold text-slate-700 mb-2">ברוכים הבאים ל-GovData Pro</h2>
+                    <p class="text-sm mb-6">כלי הניתוח והחילוץ המתקדם למאגרי המידע הפתוחים של ממשלת ישראל.</p>
+                    <div class="grid grid-cols-2 gap-4 text-xs">
+                        <div class="p-3 bg-slate-50 rounded-xl"><b>חפש</b> מאגרים</div>
+                        <div class="p-3 bg-slate-50 rounded-xl"><b>נתח</b> בטבלה</div>
+                        <div class="p-3 bg-slate-50 rounded-xl"><b>סנן</b> משרדים</div>
+                        <div class="p-3 bg-slate-50 rounded-xl"><b>ייצא</b> ל-Excel</div>
+                    </div>
+                </div>
             </div>
 
-            <div id="data-view" class="hidden">
-                <div class="mb-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <h2 id="dataset-title" class="text-2xl font-black text-blue-900 mb-2"></h2>
-                    <p id="dataset-description" class="text-slate-600 text-sm mb-4"></p>
-                    <div id="resources-tags" class="flex flex-wrap gap-2"></div>
+            <!-- Data Content View -->
+            <div id="data-view" class="hidden space-y-6">
+                <!-- Info Card -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-start">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                            <h2 id="dataset-title" class="text-2xl font-black text-slate-800"></h2>
+                            <button id="fav-btn" class="text-slate-300 hover:text-amber-400 text-xl transition"><i class="fas fa-star"></i></button>
+                        </div>
+                        <p id="dataset-description" class="text-slate-500 text-sm leading-relaxed max-w-3xl"></p>
+                        <div id="resources-tabs" class="flex flex-wrap gap-2 mt-4"></div>
+                    </div>
+                    <div id="org-badge" class="bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-xs font-bold shadow-sm"></div>
                 </div>
 
-                <div class="card bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-                    <div class="p-4 bg-slate-800 text-white flex justify-between items-center">
-                        <span id="resource-name" class="font-bold">נתונים מהטבלה</span>
-                        <div class="text-xs opacity-70">מציג 100 שורות ראשונות</div>
+                <!-- Table Card -->
+                <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                    <div class="p-4 bg-slate-800 text-white flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm font-bold"><i class="fas fa-table mr-2"></i> <span id="active-res-name">בחר קובץ</span></span>
+                            <div class="h-4 w-px bg-slate-600"></div>
+                            <div class="flex items-center gap-2">
+                                <input type="text" id="table-filter" placeholder="חיפוש מהיר בתוך הטבלה..." 
+                                    class="bg-slate-700 text-xs text-white border-none rounded-lg px-4 py-1.5 focus:ring-1 focus:ring-blue-400 outline-none w-64">
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="exportToCSV()" class="text-xs bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg transition font-bold">
+                                <i class="fas fa-file-export mr-1"></i> ייצוא CSV
+                            </button>
+                            <div class="flex bg-slate-700 rounded-lg p-1">
+                                <button onclick="changePage(-1)" class="px-2 hover:text-blue-400"><i class="fas fa-chevron-right"></i></button>
+                                <span id="page-info" class="text-[10px] px-2 self-center">עמוד 1</span>
+                                <button onclick="changePage(1)" class="px-2 hover:text-blue-400"><i class="fas fa-chevron-left"></i></button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="overflow-x-auto">
+
+                    <div class="data-table-container">
                         <table class="w-full text-right text-sm">
-                            <thead id="table-head" class="bg-slate-100 border-b border-slate-200"></thead>
+                            <thead id="table-head"></thead>
                             <tbody id="table-body"></tbody>
                         </table>
                     </div>
-                    <div id="no-api-msg" class="hidden p-10 text-center text-slate-500 italic">
-                        משאב זה הוא קובץ להורדה ולא טבלה הניתנת לתצוגה ישירה ב-API.
+                    
+                    <div id="no-data-msg" class="hidden p-20 text-center text-slate-400">
+                        <i class="fas fa-info-circle text-4xl mb-4 block"></i>
+                        קובץ זה אינו ניתן לתצוגה מקוונת. נסה להוריד אותו ישירות.
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Loader Overlay -->
-    <div id="loader" class="fixed inset-0 bg-white/50 z-[100] hidden flex justify-center items-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+    <!-- Global Loader -->
+    <div id="loader" class="fixed inset-0 bg-white/60 z-[100] hidden flex justify-center items-center backdrop-blur-sm">
+        <div class="flex flex-col items-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+            <p class="mt-4 font-bold text-blue-900 animate-pulse">מושך נתונים מהשרת...</p>
+        </div>
     </div>
 
     <script>
-        const BASE_URL = "https://data.gov.il/api/3/action/";
+        const API_BASE = "https://data.gov.il/api/3/action/";
+        let currentDataset = null;
+        let currentResourceId = null;
+        let currentTableData = [];
+        let currentPage = 0;
         let debounceTimer;
 
-        // האזנה לחיפוש עם השהיה (Debounce)
-        document.getElementById('main-search').addEventListener('input', (e) => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => searchDatasets(e.target.value), 500);
-        });
+        // --- Initialization ---
+        window.onload = () => {
+            loadOrganizations();
+            initSearch();
+        };
 
-        // 1. חיפוש חבילות נתונים (Packages)
-        async function searchDatasets(query) {
+        function initSearch() {
+            document.getElementById('main-search').addEventListener('input', (e) => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => search(e.target.value), 500);
+            });
+
+            document.getElementById('table-filter').addEventListener('input', (e) => {
+                filterLocalTable(e.target.value);
+            });
+        }
+
+        // --- API Functions ---
+
+        async function search(query) {
             if (query.length < 2) return;
+            toggleSidebarTab('results');
             showLoader(true);
-            
             try {
-                const res = await fetch(`${BASE_URL}package_search?q=${encodeURIComponent(query)}`);
+                const res = await fetch(`${API_BASE}package_search?q=${encodeURIComponent(query)}&rows=20`);
                 const data = await res.json();
-                renderDatasetsList(data.result.results);
-            } catch (err) {
-                console.error("Search error:", err);
+                renderDatasets(data.result.results);
+            } catch (e) { console.error(e); }
+            finally { showLoader(false); }
+        }
+
+        async function loadOrganizations() {
+            try {
+                const res = await fetch(`${API_BASE}organization_list?all_fields=true`);
+                const data = await res.json();
+                const list = document.getElementById('orgs-list');
+                list.innerHTML = data.result.map(org => `
+                    <div onclick="filterByOrg('${org.name}')" class="p-3 hover:bg-blue-50 cursor-pointer transition flex items-center justify-between group">
+                        <span class="text-sm font-bold text-slate-700 group-hover:text-blue-600">${org.title}</span>
+                        <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-400">${org.package_count}</span>
+                    </div>
+                `).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        async function filterByOrg(orgName) {
+            showLoader(true);
+            toggleSidebarTab('results');
+            try {
+                const res = await fetch(`${API_BASE}package_search?q=organization:${orgName}&rows=50`);
+                const data = await res.json();
+                renderDatasets(data.result.results);
+            } catch (e) { console.error(e); }
+            finally { showLoader(false); }
+        }
+
+        async function loadDataset(id) {
+            showLoader(true);
+            try {
+                const res = await fetch(`${API_BASE}package_show?id=${id}`);
+                const data = await res.json();
+                currentDataset = data.result;
+                renderDatasetView();
+            } catch (e) { console.error(e); }
+            finally { showLoader(false); }
+        }
+
+        async function fetchTable(resourceId, page = 0) {
+            currentResourceId = resourceId;
+            currentPage = page;
+            showLoader(true);
+            try {
+                const offset = page * 100;
+                const res = await fetch(`${API_BASE}datastore_search?resource_id=${resourceId}&limit=100&offset=${offset}`);
+                const data = await res.json();
+                
+                if (data.success && data.result.records.length > 0) {
+                    currentTableData = data.result.records;
+                    renderTable(data.result.fields, data.result.records);
+                    document.getElementById('no-data-msg').classList.add('hidden');
+                    document.querySelector('.data-table-container').classList.remove('hidden');
+                } else {
+                    throw new Error("No API access");
+                }
+            } catch (e) {
+                document.getElementById('no-data-msg').classList.remove('hidden');
+                document.querySelector('.data-table-container').classList.add('hidden');
             } finally {
                 showLoader(false);
+                document.getElementById('page-info').innerText = `עמוד ${page + 1}`;
             }
         }
 
-        function renderDatasetsList(results) {
-            const list = document.getElementById('datasets-list');
-            if (results.length === 0) {
-                list.innerHTML = `<div class="p-10 text-center text-slate-400">לא נמצאו תוצאות</div>`;
+        // --- Rendering Functions ---
+
+        function renderDatasets(results) {
+            const container = document.getElementById('datasets-list');
+            if (!results.length) {
+                container.innerHTML = `<div class="p-10 text-center text-slate-400">אין תוצאות</div>`;
                 return;
             }
-
-            list.innerHTML = results.map(ds => `
-                <div onclick="getDatasetDetails('${ds.id}')" class="p-4 border-b hover:bg-blue-50 cursor-pointer transition group">
-                    <div class="font-bold text-slate-800 group-hover:text-blue-700 transition">${ds.title}</div>
-                    <div class="text-[10px] text-slate-400 mt-1">${ds.notes ? ds.notes.substring(0, 60) + '...' : 'אין תיאור'}</div>
-                    <div class="mt-2 flex gap-2">
-                        <span class="text-[9px] bg-slate-100 px-2 py-0.5 rounded text-slate-500">${ds.num_resources} קבצים</span>
-                        <span class="text-[9px] bg-blue-100 px-2 py-0.5 rounded text-blue-600">${ds.organization.title}</span>
-                    </div>
+            container.innerHTML = results.map(ds => `
+                <div onclick="loadDataset('${ds.id}')" class="p-4 hover:bg-slate-50 cursor-pointer transition border-r-4 border-transparent hover:border-blue-500">
+                    <div class="font-bold text-slate-800 text-sm">${ds.title}</div>
+                    <div class="text-[10px] text-slate-400 mt-1">${ds.organization ? ds.organization.title : 'כללי'}</div>
                 </div>
             `).join('');
         }
 
-        // 2. קבלת פרטי מאגר ומשאבים (Package Show)
-        async function getDatasetDetails(id) {
-            showLoader(true);
-            try {
-                const res = await fetch(`${BASE_URL}package_show?id=${id}`);
-                const data = await res.json();
-                const dataset = data.result;
+        function renderDatasetView() {
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('data-view').classList.remove('hidden');
+            
+            document.getElementById('dataset-title').innerText = currentDataset.title;
+            document.getElementById('dataset-description').innerText = currentDataset.notes || 'אין תיאור זמין למאגר זה.';
+            document.getElementById('org-badge').innerText = currentDataset.organization.title;
+            
+            // Check Favorites
+            updateFavBtnUI();
 
-                document.getElementById('welcome-screen').classList.add('hidden');
-                document.getElementById('data-view').classList.remove('hidden');
-                document.getElementById('dataset-title').innerText = dataset.title;
-                document.getElementById('dataset-description').innerText = dataset.notes || '';
+            const tabs = document.getElementById('resources-tabs');
+            tabs.innerHTML = currentDataset.resources.map(r => `
+                <button onclick="fetchTable('${r.id}', 0)" class="text-[10px] font-bold border rounded-lg px-3 py-1.5 transition-all
+                    ${r.id === currentResourceId ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 hover:bg-slate-50'}">
+                    <i class="fas fa-file-code mr-1"></i> ${r.name || 'קובץ ללא שם'}
+                    ${r.datastore_active ? '<span class="mr-1 text-emerald-500">●</span>' : ''}
+                </button>
+            `).join('');
 
-                const tags = document.getElementById('resources-tags');
-                tags.innerHTML = dataset.resources.map(r => `
-                    <button onclick="fetchTableData('${r.id}', '${r.name}')" 
-                        class="text-[11px] bg-white border border-blue-200 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-600 hover:text-white transition shadow-sm">
-                        <i class="fas fa-file-table mr-1"></i> ${r.name || 'ללא שם'}
-                    </button>
-                `).join('');
-
-                // טעינת המשאב הראשון באופן אוטומטי אם הוא Datastore
-                const firstTable = dataset.resources.find(r => r.datastore_active);
-                if (firstTable) fetchTableData(firstTable.id, firstTable.name);
-
-            } catch (err) {
-                console.error("Details error:", err);
-            } finally {
-                showLoader(false);
-            }
+            // Load first active resource if any
+            const first = currentDataset.resources.find(r => r.datastore_active) || currentDataset.resources[0];
+            fetchTable(first.id, 0);
         }
 
-        // 3. משיכת נתונים מתוך טבלה (Datastore Search)
-        async function fetchTableData(resourceId, name) {
-            showLoader(true);
-            const tableHead = document.getElementById('table-head');
-            const tableBody = document.getElementById('table-body');
-            const noApiMsg = document.getElementById('no-api-msg');
+        function renderTable(fields, records) {
+            const head = document.getElementById('table-head');
+            const body = document.getElementById('table-body');
+            const cleanFields = fields.filter(f => f.id !== '_id');
+
+            head.innerHTML = `<tr>${cleanFields.map(f => `<th class="p-3 text-right text-slate-500 font-extrabold uppercase text-[11px] tracking-tighter">${f.id}</th>`).join('')}</tr>`;
             
-            tableHead.innerHTML = "";
-            tableBody.innerHTML = "";
-            document.getElementById('resource-name').innerText = name;
-
-            try {
-                const res = await fetch(`${BASE_URL}datastore_search?resource_id=${resourceId}&limit=100`);
-                const data = await res.json();
-
-                if (!data.success || !data.result.records.length) {
-                    noApiMsg.classList.remove('hidden');
-                    return;
-                }
-                noApiMsg.classList.add('hidden');
-
-                const records = data.result.records;
-                const fields = data.result.fields.filter(f => f.id !== '_id');
-
-                // בניית כותרת הטבלה
-                tableHead.innerHTML = `<tr>${fields.map(f => `<th class="p-3 text-right">${f.id}</th>`).join('')}</tr>`;
-
-                // בניית תוכן הטבלה
-                tableBody.innerHTML = records.map(row => `
-                    <tr class="border-b border-slate-100 hover:bg-blue-50/30 transition">
-                        ${fields.map(f => `<td class="p-3 text-slate-700">${row[f.id] !== null ? row[f.id] : ''}</td>`).join('')}
+            const renderRows = (data) => {
+                body.innerHTML = data.map(row => `
+                    <tr class="border-b border-slate-100 hover:bg-blue-50/50 transition">
+                        ${cleanFields.map(f => `<td class="p-3 text-slate-700">${row[f.id] || ''}</td>`).join('')}
                     </tr>
                 `).join('');
+            };
 
-            } catch (err) {
-                console.error("Table error:", err);
-                noApiMsg.classList.remove('hidden');
-            } finally {
-                showLoader(false);
-            }
+            renderRows(records);
+            // Save fields to window for filtering later
+            window.activeFields = cleanFields;
+        }
+
+        // --- Utility Functions ---
+
+        function filterLocalTable(val) {
+            const query = val.toLowerCase();
+            const filtered = currentTableData.filter(row => 
+                Object.values(row).some(v => String(v).toLowerCase().includes(query))
+            );
+            const body = document.getElementById('table-body');
+            body.innerHTML = filtered.map(row => `
+                <tr class="border-b border-slate-100 hover:bg-blue-50/50 transition">
+                    ${window.activeFields.map(f => `<td class="p-3 text-slate-700">${row[f.id] || ''}</td>`).join('')}
+                </tr>
+            `).join('');
+        }
+
+        function changePage(delta) {
+            const newPage = Math.max(0, currentPage + delta);
+            if (newPage !== currentPage) fetchTable(currentResourceId, newPage);
+        }
+
+        function exportToCSV() {
+            if (!currentTableData.length) return;
+            const headers = window.activeFields.map(f => f.id).join(',');
+            const rows = currentTableData.map(row => window.activeFields.map(f => `"${row[f.id] || ''}"`).join(','));
+            const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + headers + "\n" + rows.join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `govdata_export_${new Date().getTime()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+        }
+
+        function toggleSidebarTab(tab) {
+            document.getElementById('sidebar-results').classList.toggle('hidden', tab !== 'results');
+            document.getElementById('sidebar-orgs').classList.toggle('hidden', tab !== 'orgs');
+            document.getElementById('tab-results-btn').classList.toggle('border-blue-600', tab === 'results');
+            document.getElementById('tab-results-btn').classList.toggle('text-blue-600', tab === 'results');
+            document.getElementById('tab-orgs-btn').classList.toggle('border-blue-600', tab === 'orgs');
+            document.getElementById('tab-orgs-btn').classList.toggle('text-blue-600', tab === 'orgs');
         }
 
         function showLoader(show) {
             document.getElementById('loader').classList.toggle('hidden', !show);
+        }
+
+        // --- Favorites Logic ---
+        function toggleFavorite() {
+            let favs = JSON.parse(localStorage.getItem('gov_favs') || '[]');
+            const index = favs.findIndex(f => f.id === currentDataset.id);
+            if (index > -1) favs.splice(index, 1);
+            else favs.push({ id: currentDataset.id, title: currentDataset.title });
+            localStorage.setItem('gov_favs', JSON.stringify(favs));
+            updateFavBtnUI();
+        }
+
+        function updateFavBtnUI() {
+            const favs = JSON.parse(localStorage.getItem('gov_favs') || '[]');
+            const isFav = favs.some(f => f.id === currentDataset.id);
+            document.getElementById('fav-btn').classList.toggle('favorite-active', isFav);
+            document.getElementById('fav-btn').onclick = toggleFavorite;
+        }
+
+        function showFavorites() {
+            const favs = JSON.parse(localStorage.getItem('gov_favs') || '[]');
+            toggleSidebarTab('results');
+            renderDatasets(favs.map(f => ({ id: f.id, title: f.title, organization: { title: 'שמור במועדפים' } })));
         }
     </script>
 </body>

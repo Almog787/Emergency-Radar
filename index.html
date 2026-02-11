@@ -1,1 +1,257 @@
-,כי
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WorldLink Pro | Global Intelligence Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;700;800&family=Orbitron:wght@500;900&display=swap');
+        
+        :root {
+            --bg: #030712;
+            --card: #111827;
+            --accent: #3b82f6;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: #f3f4f6;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+        }
+
+        .stat-card {
+            background: linear-gradient(145deg, #1f2937, #111827);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+
+        /* סרגל גלילה */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Top Bar -->
+    <header class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <i class="fas fa-globe-americas text-2xl text-white"></i>
+            </div>
+            <div>
+                <h1 class="orbitron text-2xl font-black tracking-tighter">WORLD<span class="text-blue-500">LINK</span></h1>
+                <p class="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-bold" id="ui-subtitle">Global Intelligence OS</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 glass-panel p-2">
+            <select id="lang-select" onchange="changeLang(this.value)" class="bg-transparent text-xs font-bold outline-none cursor-pointer p-1">
+                <option value="en" class="bg-gray-900">English</option>
+                <option value="he" class="bg-gray-900">עברית</option>
+                <option value="es" class="bg-gray-900">Español</option>
+                <option value="ar" class="bg-gray-900">العربية</option>
+            </select>
+            <div id="clock" class="orbitron text-sm font-bold bg-slate-800 px-4 py-2 rounded-xl border border-white/5">00:00:00</div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left: News & Crypto (4 Cols) -->
+        <div class="lg:col-span-4 space-y-6">
+            <!-- Crypto Pulse -->
+            <div class="glass-panel p-6">
+                <h3 class="text-xs font-black uppercase text-blue-400 mb-4 tracking-widest" id="ui-market">Market Pulse</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <i class="fab fa-bitcoin text-orange-500 text-xl"></i>
+                            <span class="font-bold">Bitcoin</span>
+                        </div>
+                        <span id="btc-price" class="orbitron text-sm">Loading...</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <i class="fab fa-ethereum text-blue-400 text-xl"></i>
+                            <span class="font-bold">Ethereum</span>
+                        </div>
+                        <span id="eth-price" class="orbitron text-sm">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global News Tracker -->
+            <div class="glass-panel p-6 h-[400px] flex flex-col">
+                <h3 class="text-xs font-black uppercase text-red-500 mb-4 tracking-widest" id="ui-news">World Headlines</h3>
+                <div id="news-feed" class="flex-1 overflow-y-auto space-y-4 pr-2">
+                    <div class="animate-pulse space-y-2">
+                        <div class="h-3 bg-slate-800 rounded w-3/4"></div>
+                        <div class="h-2 bg-slate-800 rounded w-full"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center: Satellite View (5 Cols) -->
+        <div class="lg:col-span-5 space-y-6">
+            <div class="glass-panel p-2 aspect-video relative overflow-hidden group">
+                <div class="absolute top-4 left-4 z-20 flex items-center gap-2">
+                    <span class="flex h-2 w-2 rounded-full bg-red-500 animate-ping"></span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-white shadow-sm" id="ui-live">Live: ISS Station</span>
+                </div>
+                <iframe class="w-full h-full rounded-2xl" 
+                    src="https://www.youtube.com/embed/jPTD2gnZFUw?autoplay=1&mute=1&controls=0&modestbranding=1" 
+                    frameborder="0" allowfullscreen></iframe>
+            </div>
+
+            <!-- Weather Global Explorer -->
+            <div class="glass-panel p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xs font-black uppercase text-emerald-400 tracking-widest" id="ui-weather">Weather Explorer</h3>
+                    <input type="text" id="city-search" placeholder="Search City..." onchange="getWeather(this.value)"
+                        class="bg-slate-900 border border-white/10 rounded-lg px-3 py-1 text-xs outline-none focus:border-emerald-500 transition">
+                </div>
+                <div id="weather-res" class="flex items-center justify-between">
+                    <div>
+                        <div id="w-city" class="text-2xl font-black">London</div>
+                        <div id="w-desc" class="text-xs text-slate-500 uppercase font-bold">Clear Sky</div>
+                    </div>
+                    <div id="w-temp" class="orbitron text-4xl font-black">22°C</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Search & Discovery (3 Cols) -->
+        <div class="lg:col-span-3 space-y-6">
+            <div class="glass-panel p-6 flex flex-col h-full">
+                <h3 class="text-xs font-black uppercase text-amber-400 mb-4 tracking-widest" id="ui-discover">Country Intelligence</h3>
+                <input type="text" id="country-in" placeholder="Enter Country..." onchange="getCountry(this.value)"
+                    class="bg-slate-900 border border-white/10 rounded-xl p-3 text-xs w-full mb-6 outline-none focus:border-amber-500 transition">
+                
+                <div id="country-data" class="space-y-6 hidden">
+                    <img id="c-flag" class="w-full h-32 object-cover rounded-xl shadow-lg mb-4" src="" alt="">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="bg-slate-800/50 p-3 rounded-xl border border-white/5">
+                            <div class="text-[9px] text-slate-500 uppercase font-bold" id="ui-pop">Population</div>
+                            <div id="c-pop" class="font-bold text-sm">0</div>
+                        </div>
+                        <div class="bg-slate-800/50 p-3 rounded-xl border border-white/5">
+                            <div class="text-[9px] text-slate-500 uppercase font-bold" id="ui-cur">Currency</div>
+                            <div id="c-cur" class="font-bold text-sm">USD</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- Translations ---
+        const i18n = {
+            en: { subtitle: "Global Intelligence OS", market: "Market Pulse", news: "World Headlines", live: "Live: ISS Station", weather: "Weather Explorer", discover: "Country Intelligence", pop: "Population", cur: "Currency", dir: "ltr" },
+            he: { subtitle: "מערכת מודיעין גלובלית", market: "דופק שוק", news: "כותרות מהעולם", live: "חי: תחנת החלל", weather: "מזג אוויר עולמי", discover: "מודיעין מדינות", pop: "אוכלוסייה", cur: "מטבע", dir: "rtl" },
+            es: { subtitle: "S.O. de Inteligencia Global", market: "Pulso del Mercado", news: "Titulares Mundiales", live: "En vivo: Estación ISS", weather: "Explorador de Clima", discover: "Inteligencia de País", pop: "Población", cur: "Moneda", dir: "ltr" },
+            ar: { subtitle: "نظام الاستخبارات العالمي", market: "نبض السوق", news: "العناوين العالمية", live: "مباشר: محطة ISS", weather: "מستكشف الطقس", discover: "استخبارات الدول", pop: "عدد السكان", cur: "العملة", dir: "rtl" }
+        };
+
+        function changeLang(lang) {
+            const data = i18n[lang];
+            document.documentElement.setAttribute('dir', data.dir);
+            document.documentElement.setAttribute('lang', lang);
+            document.getElementById('ui-subtitle').innerText = data.subtitle;
+            document.getElementById('ui-market').innerText = data.market;
+            document.getElementById('ui-news').innerText = data.news;
+            document.getElementById('ui-live').innerText = data.live;
+            document.getElementById('ui-weather').innerText = data.weather;
+            document.getElementById('ui-discover').innerText = data.discover;
+            document.getElementById('ui-pop').innerText = data.pop;
+            document.getElementById('ui-cur').innerText = data.cur;
+        }
+
+        // --- Clock ---
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+        }, 1000);
+
+        // --- Crypto (Binance API) ---
+        async function getCrypto() {
+            try {
+                const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbols=["BTCUSDT","ETHUSDT"]');
+                const data = await res.json();
+                document.getElementById('btc-price').innerText = '$' + Math.round(data[0].price).toLocaleString();
+                document.getElementById('eth-price').innerText = '$' + Math.round(data[1].price).toLocaleString();
+            } catch (e) {}
+        }
+
+        // --- Weather (Open-Meteo) ---
+        async function getWeather(city = "London") {
+            try {
+                // First get coords (Geocoding)
+                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1`);
+                const geoData = await geoRes.json();
+                const { latitude, longitude, name } = geoData.results[0];
+                
+                const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+                const wData = await wRes.json();
+                
+                document.getElementById('w-city').innerText = name;
+                document.getElementById('w-temp').innerText = Math.round(wData.current_weather.temperature) + '°C';
+                document.getElementById('w-desc').innerText = "Wind: " + wData.current_weather.windspeed + " km/h";
+            } catch (e) {}
+        }
+
+        // --- Country Data (REST Countries) ---
+        async function getCountry(name) {
+            try {
+                const res = await fetch(`https://restcountries.com/v3.1/name/${name}`);
+                const [data] = await res.json();
+                document.getElementById('country-data').classList.remove('hidden');
+                document.getElementById('c-flag').src = data.flags.svg;
+                document.getElementById('c-pop').innerText = data.population.toLocaleString();
+                const curKey = Object.keys(data.currencies)[0];
+                document.getElementById('c-cur').innerText = data.currencies[curKey].name;
+            } catch (e) {}
+        }
+
+        // --- Mock News (Using Wikipedia for international reach) ---
+        async function getNews() {
+            try {
+                const res = await fetch('https://en.wikipedia.org/api/rest_v1/feed/featured/' + new Date().toISOString().split('T')[0].replace(/-/g, '/'));
+                const data = await res.json();
+                const news = data.mostread.articles.slice(0, 10);
+                document.getElementById('news-feed').innerHTML = news.map(a => `
+                    <div class="border-b border-white/5 pb-3">
+                        <a href="${a.content_urls.desktop.page}" target="_blank" class="text-xs font-bold hover:text-blue-400 transition">${a.titles.normalized}</a>
+                        <p class="text-[10px] text-slate-500 mt-1 line-clamp-2">${a.extract}</p>
+                    </div>
+                `).join('');
+            } catch (e) {}
+        }
+
+        // --- Init ---
+        getCrypto();
+        getWeather();
+        getNews();
+        setInterval(getCrypto, 10000);
+    </script>
+</body>
+</html>

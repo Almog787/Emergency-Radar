@@ -3,152 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>לוח טיסות נתב"ג - זמן אמת</title>
+    <title>GovData Explorer - סורק המאגרים הממשלתי</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700;800&display=swap');
-        body { font-family: 'Assistant', sans-serif; background-color: #0f172a; color: white; }
-        .flight-row:nth-child(even) { background-color: rgba(255, 255, 255, 0.05); }
-        .status-landed { color: #4ade80; } /* ירוק */
-        .status-delayed { color: #f87171; } /* אדום */
-        .status-final { color: #60a5fa; } /* כחול */
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;800&display=swap');
+        body { font-family: 'Assistant', sans-serif; background-color: #f8fafc; }
+        .sidebar { height: calc(100vh - 64px); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+        tr:nth-child(even) { background-color: #f1f5f9; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="overflow-hidden">
 
-    <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-            <div>
-                <h1 class="text-4xl font-black tracking-tighter text-blue-400 italic">TLV LIVE <span class="text-white">BOARD</span></h1>
-                <p class="text-slate-400 text-sm">נתונים רשמיים מרשות שדות התעופה (data.gov.il)</p>
-            </div>
-            
-            <div class="flex bg-slate-800 p-1 rounded-xl shadow-inner">
-                <button onclick="changeMode('D')" id="btn-dep" class="px-6 py-2 rounded-lg font-bold transition bg-blue-600">המראות</button>
-                <button onclick="changeMode('A')" id="btn-arr" class="px-6 py-2 rounded-lg font-bold transition">נחיתות</button>
-            </div>
-        </header>
-
-        <!-- Search & Filter -->
-        <div class="mb-6 relative">
-            <input type="text" id="search" placeholder="חפש עיר, חברה או מספר טיסה..." 
-                class="w-full bg-slate-800 border border-slate-700 p-4 rounded-2xl outline-none focus:border-blue-500 transition shadow-lg text-lg">
-            <div id="loading" class="absolute left-4 top-4 hidden">
-                <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
+    <!-- Header -->
+    <header class="bg-blue-900 text-white h-16 px-6 flex justify-between items-center shadow-lg relative z-50">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-university text-2xl text-blue-400"></i>
+            <h1 class="text-xl font-black tracking-tight">GOV DATA <span class="text-blue-300 font-light">EXPLORER</span></h1>
+        </div>
+        <div class="flex items-center gap-4 flex-1 max-w-2xl px-10">
+            <div class="relative w-full">
+                <input type="text" id="main-search" placeholder="חפש מאגר (למשל: רכב, בתי ספר, טיסות...)" 
+                    class="w-full bg-blue-800 text-white placeholder-blue-300 border-none rounded-full py-2 px-10 focus:ring-2 focus:ring-blue-400 outline-none transition">
+                <i class="fas fa-search absolute right-4 top-3 text-blue-300"></i>
             </div>
         </div>
+        <div class="text-xs text-blue-200 hidden md:block">מבוסס API רשמי data.gov.il</div>
+    </header>
 
-        <!-- Table Container -->
-        <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-800">
-            <div class="overflow-x-auto">
-                <table class="w-full text-right border-collapse">
-                    <thead>
-                        <tr class="bg-slate-800 text-slate-400 uppercase text-xs font-bold tracking-widest">
-                            <th class="p-4">חברה</th>
-                            <th class="p-4">טיסה</th>
-                            <th class="p-4">יעד/מקור</th>
-                            <th class="p-4 text-center">טרמינל</th>
-                            <th class="p-4">זמן מתוכנן</th>
-                            <th class="p-4">סטטוס</th>
-                        </tr>
-                    </thead>
-                    <tbody id="flight-table" class="divide-y divide-slate-800">
-                        <!-- נתונים יוזרקו כאן -->
-                    </tbody>
-                </table>
+    <div class="flex">
+        <!-- Sidebar: Results List -->
+        <aside class="sidebar w-80 bg-white border-l shadow-inner flex flex-col z-40">
+            <div class="p-4 bg-slate-50 border-b">
+                <h2 class="text-sm font-bold text-slate-600 uppercase">תוצאות חיפוש</h2>
             </div>
-        </div>
-        
-        <div id="no-results" class="hidden text-center py-20 text-slate-500 italic">לא נמצאו טיסות תואמות</div>
+            <div id="datasets-list" class="flex-1 overflow-y-auto custom-scrollbar">
+                <div class="p-10 text-center text-slate-400 italic">הקלד בחיפוש כדי למצוא מאגרי מידע</div>
+            </div>
+        </aside>
+
+        <!-- Main Content: Data View -->
+        <main class="flex-1 bg-slate-100 sidebar overflow-y-auto p-6 custom-scrollbar">
+            <div id="welcome-screen" class="h-full flex flex-col justify-center items-center text-slate-400">
+                <i class="fas fa-database text-6xl mb-4 opacity-20"></i>
+                <p class="text-xl font-bold">בחר מאגר מידע כדי להציג את הנתונים</p>
+                <p class="text-sm">ניתן לחפש קבוצות נתונים של משרדי הממשלה השונים</p>
+            </div>
+
+            <div id="data-view" class="hidden">
+                <div class="mb-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 id="dataset-title" class="text-2xl font-black text-blue-900 mb-2"></h2>
+                    <p id="dataset-description" class="text-slate-600 text-sm mb-4"></p>
+                    <div id="resources-tags" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <div class="card bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                    <div class="p-4 bg-slate-800 text-white flex justify-between items-center">
+                        <span id="resource-name" class="font-bold">נתונים מהטבלה</span>
+                        <div class="text-xs opacity-70">מציג 100 שורות ראשונות</div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right text-sm">
+                            <thead id="table-head" class="bg-slate-100 border-b border-slate-200"></thead>
+                            <tbody id="table-body"></tbody>
+                        </table>
+                    </div>
+                    <div id="no-api-msg" class="hidden p-10 text-center text-slate-500 italic">
+                        משאב זה הוא קובץ להורדה ולא טבלה הניתנת לתצוגה ישירה ב-API.
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loader Overlay -->
+    <div id="loader" class="fixed inset-0 bg-white/50 z-[100] hidden flex justify-center items-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
     </div>
 
     <script>
-        // מזהה המשאיר של לוח הטיסות ב-data.gov.il
-        const RESOURCE_ID = "e83f7610-d348-4030-af11-b91817454942";
-        const API_URL = "https://data.gov.il/api/3/action/datastore_search";
-        
-        let currentMode = 'D'; // D = Departures, A = Arrivals
-        let allFlights = [];
+        const BASE_URL = "https://data.gov.il/api/3/action/";
+        let debounceTimer;
 
-        async function fetchFlights() {
-            const loading = document.getElementById('loading');
-            loading.classList.remove('hidden');
+        // האזנה לחיפוש עם השהיה (Debounce)
+        document.getElementById('main-search').addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => searchDatasets(e.target.value), 500);
+        });
 
+        // 1. חיפוש חבילות נתונים (Packages)
+        async function searchDatasets(query) {
+            if (query.length < 2) return;
+            showLoader(true);
+            
             try {
-                // אנחנו מושכים את 200 הטיסות האחרונות (המראות ונחיתות יחד)
-                const response = await fetch(`${API_URL}?resource_id=${RESOURCE_ID}&limit=250`);
-                const data = await response.json();
-                allFlights = data.result.records;
-                
-                renderTable();
-            } catch (error) {
-                console.error("API Error:", error);
-                alert("שגיאה בחיבור לפורטל הנתונים הממשלתי");
+                const res = await fetch(`${BASE_URL}package_search?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                renderDatasetsList(data.result.results);
+            } catch (err) {
+                console.error("Search error:", err);
             } finally {
-                loading.classList.add('hidden');
+                showLoader(false);
             }
         }
 
-        function renderTable() {
-            const tableBody = document.getElementById('flight-table');
-            const searchTerm = document.getElementById('search').value.toLowerCase();
-            const noResults = document.getElementById('no-results');
+        function renderDatasetsList(results) {
+            const list = document.getElementById('datasets-list');
+            if (results.length === 0) {
+                list.innerHTML = `<div class="p-10 text-center text-slate-400">לא נמצאו תוצאות</div>`;
+                return;
+            }
+
+            list.innerHTML = results.map(ds => `
+                <div onclick="getDatasetDetails('${ds.id}')" class="p-4 border-b hover:bg-blue-50 cursor-pointer transition group">
+                    <div class="font-bold text-slate-800 group-hover:text-blue-700 transition">${ds.title}</div>
+                    <div class="text-[10px] text-slate-400 mt-1">${ds.notes ? ds.notes.substring(0, 60) + '...' : 'אין תיאור'}</div>
+                    <div class="mt-2 flex gap-2">
+                        <span class="text-[9px] bg-slate-100 px-2 py-0.5 rounded text-slate-500">${ds.num_resources} קבצים</span>
+                        <span class="text-[9px] bg-blue-100 px-2 py-0.5 rounded text-blue-600">${ds.organization.title}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 2. קבלת פרטי מאגר ומשאבים (Package Show)
+        async function getDatasetDetails(id) {
+            showLoader(true);
+            try {
+                const res = await fetch(`${BASE_URL}package_show?id=${id}`);
+                const data = await res.json();
+                const dataset = data.result;
+
+                document.getElementById('welcome-screen').classList.add('hidden');
+                document.getElementById('data-view').classList.remove('hidden');
+                document.getElementById('dataset-title').innerText = dataset.title;
+                document.getElementById('dataset-description').innerText = dataset.notes || '';
+
+                const tags = document.getElementById('resources-tags');
+                tags.innerHTML = dataset.resources.map(r => `
+                    <button onclick="fetchTableData('${r.id}', '${r.name}')" 
+                        class="text-[11px] bg-white border border-blue-200 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-600 hover:text-white transition shadow-sm">
+                        <i class="fas fa-file-table mr-1"></i> ${r.name || 'ללא שם'}
+                    </button>
+                `).join('');
+
+                // טעינת המשאב הראשון באופן אוטומטי אם הוא Datastore
+                const firstTable = dataset.resources.find(r => r.datastore_active);
+                if (firstTable) fetchTableData(firstTable.id, firstTable.name);
+
+            } catch (err) {
+                console.error("Details error:", err);
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        // 3. משיכת נתונים מתוך טבלה (Datastore Search)
+        async function fetchTableData(resourceId, name) {
+            showLoader(true);
+            const tableHead = document.getElementById('table-head');
+            const tableBody = document.getElementById('table-body');
+            const noApiMsg = document.getElementById('no-api-msg');
             
-            // סינון לפי מצב (המראה/נחיתה) ולפי חיפוש
-            const filtered = allFlights.filter(f => {
-                const matchesMode = f.CHRMINE.includes(currentMode === 'D' ? 'DEPARTED' : 'LANDED') || 
-                                    f.CHRMINE.includes(currentMode === 'D' ? 'ON TIME' : 'FINAL') ||
-                                    (currentMode === 'D' && f.CHRMINE === "") || // חלק מהמראות ללא סטטוס
-                                    f.CHRMINE.includes(currentMode === 'D' ? 'המריאה' : 'נחתה');
-                
-                // בגלל שהדאטה של הממשלה קצת "מלוכלך", נסנן לפי שדה ה-CHRMINE (סטטוס)
-                const isDeparture = f.CHRMINE.includes("DEPARTED") || f.CHRMINE.includes("המריאה") || f.CHRMINE.includes("CHECK-IN");
-                const isArrival = f.CHRMINE.includes("LANDED") || f.CHRMINE.includes("נחתה") || f.CHRMINE.includes("FINAL");
-                
-                const modeFilter = (currentMode === 'D' ? isDeparture : isArrival);
+            tableHead.innerHTML = "";
+            tableBody.innerHTML = "";
+            document.getElementById('resource-name').innerText = name;
 
-                const searchStr = `${f.CHOPER} ${f.CHFLTN} ${f.CHLOC1CH}`.toLowerCase();
-                return modeFilter && searchStr.includes(searchTerm);
-            });
+            try {
+                const res = await fetch(`${BASE_URL}datastore_search?resource_id=${resourceId}&limit=100`);
+                const data = await res.json();
 
-            tableBody.innerHTML = filtered.map(f => {
-                const time = f.CHSTOL.split('T')[1].substring(0, 5); // פורמט HH:MM
-                const status = f.CHRMINE || "בזמן";
-                
-                let statusClass = "";
-                if(status.includes("LANDED") || status.includes("DEPARTED")) statusClass = "status-landed";
-                if(status.includes("CANCELLED") || status.includes("DELAYED")) statusClass = "status-delayed";
-                if(status.includes("FINAL")) statusClass = "status-final";
+                if (!data.success || !data.result.records.length) {
+                    noApiMsg.classList.remove('hidden');
+                    return;
+                }
+                noApiMsg.classList.add('hidden');
 
-                return `
-                    <tr class="flight-row hover:bg-slate-800/50 transition duration-150">
-                        <td class="p-4 font-bold">${f.CHOPER}</td>
-                        <td class="p-4 text-blue-400 font-mono">${f.CHFLTN}</td>
-                        <td class="p-4 text-lg font-medium">${f.CHLOC1CH}</td>
-                        <td class="p-4 text-center font-bold text-slate-500">${f.CHTERM}</td>
-                        <td class="p-4 font-mono text-slate-300">${time}</td>
-                        <td class="p-4 font-bold text-sm ${statusClass}">${status}</td>
+                const records = data.result.records;
+                const fields = data.result.fields.filter(f => f.id !== '_id');
+
+                // בניית כותרת הטבלה
+                tableHead.innerHTML = `<tr>${fields.map(f => `<th class="p-3 text-right">${f.id}</th>`).join('')}</tr>`;
+
+                // בניית תוכן הטבלה
+                tableBody.innerHTML = records.map(row => `
+                    <tr class="border-b border-slate-100 hover:bg-blue-50/30 transition">
+                        ${fields.map(f => `<td class="p-3 text-slate-700">${row[f.id] !== null ? row[f.id] : ''}</td>`).join('')}
                     </tr>
-                `;
-            }).join('');
+                `).join('');
 
-            noResults.classList.toggle('hidden', filtered.length > 0);
+            } catch (err) {
+                console.error("Table error:", err);
+                noApiMsg.classList.remove('hidden');
+            } finally {
+                showLoader(false);
+            }
         }
 
-        function changeMode(mode) {
-            currentMode = mode;
-            document.getElementById('btn-dep').classList.toggle('bg-blue-600', mode === 'D');
-            document.getElementById('btn-arr').classList.toggle('bg-blue-600', mode === 'A');
-            renderTable();
+        function showLoader(show) {
+            document.getElementById('loader').classList.toggle('hidden', !show);
         }
-
-        // האזנה לחיפוש
-        document.getElementById('search').addEventListener('input', renderTable);
-
-        // הפעלה ורענון אוטומטי כל דקה
-        fetchFlights();
-        setInterval(fetchFlights, 60000);
     </script>
 </body>
 </html>

@@ -28,7 +28,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Set up Python 3.10 # שדרוג קל ל-3.10 ליציבות טובה יותר
+      - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
@@ -36,12 +36,15 @@ jobs:
       - name: Install Compatible Dependencies
         run: |
           python -m pip install --upgrade pip
-          # התקנת גרסאות ספציפיות שמתאימות ל-pandas-ta ולניתוח פיננסי
-          # אנחנו נועלים את numpy מתחת ל-2.0 ואת pandas בגרסה 1.5.x
+          # 1. התקנת תשתיות יציבות
           pip install numpy==1.26.4
           pip install pandas==1.5.3
           pip install yfinance==0.2.40
-          pip install pandas-ta==0.3.14b0
+          
+          # 2. התקנת pandas-ta ישירות מהמקור ב-GitHub (עוקף את שגיאת הגרסה ב-PyPI)
+          pip install https://github.com/twopirllc/pandas-ta/archive/master.zip
+          
+          # 3. התקנת ספריות גרפיות
           pip install mplfinance matplotlib
 
       - name: Execute Data Collection & Analysis
@@ -63,5 +66,5 @@ jobs:
           git add data/*.json
           git add charts/*.png
           git add README.md
-          git commit -m "Automated Sync: AI Analysis & Charts [Skip CI]" || echo "No changes to commit"
+          git commit -m "Automated Sync: Institutional Analysis & Charts [Skip CI]" || echo "No changes to commit"
           git push

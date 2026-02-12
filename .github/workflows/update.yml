@@ -36,13 +36,13 @@ jobs:
       - name: Install Compatible Dependencies
         run: |
           python -m pip install --upgrade pip
-          # 1. התקנת תשתיות יציבות
+          # 1. התקנת תשתיות יציבות (גרסאות תואמות)
           pip install numpy==1.26.4
           pip install pandas==1.5.3
           pip install yfinance==0.2.40
           
-          # 2. התקנת pandas-ta ישירות מהמקור ב-GitHub (עוקף את שגיאת הגרסה ב-PyPI)
-          pip install https://github.com/twopirllc/pandas-ta/archive/master.zip
+          # 2. התקנת pandas-ta ישירות מה-Git (הדרך הבטוחה לעקוף שגיאות PyPI)
+          pip install git+https://github.com/twopirllc/pandas-ta.git
           
           # 3. התקנת ספריות גרפיות
           pip install mplfinance matplotlib

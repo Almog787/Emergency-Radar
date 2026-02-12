@@ -1,8 +1,21 @@
-name: Market Analysis Engine
+name: Market Control Center
 on:
   schedule:
-    - cron: '0 0 * * *' # הרצה פעם ביום
-  workflow_dispatch: # מאפשר הרצה ידנית של הכל
+    - cron: '0 0 * * *' # ריצה אוטומטית יומית מלאה
+  workflow_dispatch: # תפריט בחירה ידני
+    inputs:
+      run_collect:
+        description: 'Run Data Collection (Step 1)'
+        type: boolean
+        default: true
+      run_readme:
+        description: 'Update README & Charts (Step 2)'
+        type: boolean
+        default: true
+      delay:
+        description: 'Wait between steps (seconds)'
+        type: string
+        default: '40'
 
 jobs:
   build:
@@ -20,23 +33,26 @@ jobs:
       - name: Install Libs
         run: pip install yfinance pandas numpy matplotlib
         
-      # --- שלב 1: הרצת איסוף נתונים ---
+      # --- שלב 1: איסוף נתונים (ירוץ אם בחרת או אם זו ריצה אוטומטית) ---
       - name: Step 1 - Data Collection
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.run_collect == 'true' }}
         run: python collect_data.py
         
-      # --- שלב ביניים: המתנה (40 שניות) ---
-      - name: Wait for Data Stabilization
-        run: sleep 40
+      # --- שלב ביניים: המתנה (רק אם שני השלבים רצים) ---
+      - name: Wait for Sync
+        if: ${{ (github.event_name == 'schedule' || (github.event.inputs.run_collect == 'true' && github.event.inputs.run_readme == 'true')) }}
+        run: sleep ${{ github.event.inputs.delay || 40 }}
         
-      # --- שלב 2: הרצת עיצוב README וגרפים ---
+      # --- שלב 2: עיצוב README (ירוץ אם בחרת או אם זו ריצה אוטומטית) ---
       - name: Step 2 - Generate Visuals & README
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.run_readme == 'true' }}
         run: python create_readme.py
         
-      # --- שלב 3: העלאת תוצאות ל-GitHub ---
+      # --- שלב 3: שמירה ל-GitHub ---
       - name: Commit and Push Results
         run: |
           git config --global user.name 'Analyst Bot'
           git config --global user.email 'bot@market.ai'
           git add data/*.json charts/*.png README.md
-          git commit -m "Daily Market Data and README Refresh" || echo "No changes to commit"
+          git commit -m "Manual/Auto Market Update" || echo "No changes to commit"
           git push

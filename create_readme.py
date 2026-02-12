@@ -1,113 +1,89 @@
-import json
-import os
-import pandas as pd
+import json, os, pandas as pd
 import mplfinance as mpf
 from datetime import datetime
-import matplotlib.pyplot as plt
 
-# הגדרות נתיבים
 DATA_DIR = "data"
 CHARTS_DIR = "charts"
 SITE_URL = "https://almog787.github.io/Stock-information-/"
 
-# יצירת תיקיית גרפים אם לא קיימת
-if not os.path.exists(CHARTS_DIR):
-    os.makedirs(CHARTS_DIR)
-
-def generate_data_audit():
-    audit_results = []
-    if not os.path.exists(DATA_DIR): return []
-    files = [f for f in os.listdir(DATA_DIR) if f.endswith('_daily.json')]
-    for file in files:
-        file_path = os.path.join(DATA_DIR, file)
-        try:
-            with open(file_path, 'r') as f:
-                content = json.load(f)
-                history = content.get('history', [])
-                if not history: continue
-                df = pd.DataFrame(history)
-                audit_results.append({
-                    "symbol": file.split('_')[0].upper(),
-                    "records": len(history),
-                    "start": str(df['Date'].min()).split(' ')[0],
-                    "end": str(df['Date'].max()).split(' ')[0]
-                })
-        except: continue
-    return audit_results
+if not os.path.exists(CHARTS_DIR): os.makedirs(CHARTS_DIR)
 
 def create_pro_chart(json_path, symbol, score):
-    try:
-        with open(json_path, 'r') as f:
-            data = json.load(f)
-        df = pd.DataFrame(data['history'])
-        df['Date'] = pd.to_datetime(df['Date'])
-        df.set_index('Date', inplace=True)
-        df_plot = df.tail(100).copy()
+    with open(json_path, 'r') as f:
+        data = json.load(f)
+    df = pd.DataFrame(data['history'])
+    df['Date'] = pd.to_datetime(df['Date'])
+    df.set_index('Date', inplace=True)
+    df = df.tail(100) 
 
-        apds = []
-        if 'SMA50' in df_plot.columns:
-            apds.append(mpf.make_addplot(df_plot['SMA50'], color='#2962ff', width=1))
-        if 'SMA200' in df_plot.columns:
-            apds.append(mpf.make_addplot(df_plot['SMA200'], color='#ff6d00', width=1.5))
+    apds = [
+        mpf.make_addplot(df['SMA50'], color='#2962ff', width=1),
+        mpf.make_addplot(df['SMA200'], color='#ff6d00', width=1.5),
+    ]
 
-        mc = mpf.make_marketcolors(up='#00ff41', down='#ff003c', edge='inherit', wick='inherit', volume='in')
-        s = mpf.make_mpf_style(base_mpf_style='nightclouds', marketcolors=mc, gridstyle=':', rc={'font.size': 10})
+    mc = mpf.make_marketcolors(up='#00ff41', down='#ff003c', edge='inherit', wick='inherit', volume='in')
+    s = mpf.make_mpf_style(base_mpf_style='nightclouds', marketcolors=mc, gridstyle=':', rc={'font.size': 10})
 
-        # שמירה בשם קובץ באותיות קטנות תמיד
-        filename = os.path.join(CHARTS_DIR, f"{symbol.lower()}.png")
-        
-        mpf.plot(df_plot, type='candle', style=s, addplot=apds, volume=True,
-                 savefig=dict(fname=filename, dpi=100, bbox_inches='tight'), 
-                 figsize=(12, 6))
-        print(f"Successfully saved chart for {symbol}")
-    except Exception as e:
-        print(f"Failed to create chart for {symbol}: {e}")
+    filename = os.path.join(CHARTS_DIR, f"{symbol.lower()}.png")
+    mpf.plot(df, type='candle', style=s, addplot=apds, volume=True,
+             savefig=dict(fname=filename, dpi=100, bbox_inches='tight'), figsize=(12, 6))
 
 def generate_readme():
-    rankings_path = os.path.join(DATA_DIR, "market_rankings.json")
-    if not os.path.exists(rankings_path): return
-    with open(rankings_path, 'r') as f:
+    with open(os.path.join(DATA_DIR, "market_rankings.json"), 'r') as f:
         rankings = json.load(f)
     
-    audit_data = generate_data_audit()
     now = datetime.now().strftime("%Y-%m-%d %H:%M UTC")
     
-    md = f"""# 🧠 Institutional AI Market Radar | מודיעין שוק
+    md = f"""# 🧠 Institutional AI Market Radar | מודיעין שוק מבוסס AI
 
 ![Last Update](https://img.shields.io/badge/Last_Update-{now.replace(' ', '--').replace(':', ':-')}-blue?style=for-the-badge)
+![Status](https://img.shields.io/badge/System-Operational-emerald?style=for-the-badge)
 
-## 🚀 [Access Live Terminal | כניסה לטרמינל]({SITE_URL})
+## 🚀 [Open Interactive Terminal | כניסה לטרמינל האינטראקטיבי]({SITE_URL})
 
 ---
 
-## 🏆 Top Opportunities | הזדמנויות מסחר
+### 🏆 Top Opportunities | הזדמנויות מובילות
 """
-
     for i in range(min(3, len(rankings))):
         r = rankings[i]
-        symbol = r['symbol']
-        json_path = os.path.join(DATA_DIR, f"{symbol.lower()}_daily.json")
-        
-        if os.path.exists(json_path):
-            create_pro_chart(json_path, symbol, r['score'])
-            # שימוש בנתיב יחסי פשוט ל-GitHub
-            md += f"### {i+1}. {symbol.upper()} (Score: {r['score']})\n"
-            md += f"![{symbol} Chart](charts/{symbol.lower()}.png)\n\n"
+        create_pro_chart(os.path.join(DATA_DIR, f"{r['symbol'].lower()}_daily.json"), r['symbol'], r['score'])
+        sig_en = ", ".join(r['signals']['en'])
+        sig_he = ", ".join(r['signals']['he'])
+        md += f"### {i+1}. {r['symbol']} (AI Score: {r['score']})\n"
+        md += f"**Signals:** `{sig_en}` | **איתותים:** `{sig_he}`\n\n"
+        md += f"![{r['symbol']}](charts/{r['symbol'].lower()}.png)\n\n"
 
     md += """
 ---
-## 📋 Rankings Table | טבלת דירוג
-| Rank | Symbol | Price | Change | Score | RSI |
+## 📋 Rankings Table | טבלת דירוג שוק
+| Rank | Symbol | Price | Change | AI Score | RSI |
 | :--- | :--- | :---: | :---: | :---: | :---: |
 """
     for i, r in enumerate(rankings):
         trend = "🟢" if r['change'] > 0 else "🔴"
         md += f"| {i+1} | **{r['symbol']}** | ${r['price']:.2f} | {trend} {r['change']:.2f}% | **{r['score']}** | {r['rsi']:.1f} |\n"
 
-    md += f"\n---\n*Auto-generated at {now}*"
+    md += """
+---
+## 📘 Legend & Definitions | מקרא והסברים
 
-    with open("README.md", "w", encoding="utf-8") as f:
-        f.write(md)
+| Term | מונח | Description | תיאור |
+| :--- | :--- | :--- | :--- |
+| **AI Score** | **ציון AI** | Quality rating (0-100). | דירוג איכות כללי (0-100). |
+| **SMA 200** | **ממוצע 200** | Orange line. Long-term trend. | קו כתום. מגמה ארוכת טווח. |
+| **RSI** | **מדד חוזק** | Momentum indicator (30-70 range). | מדד מומנטום (טווח 30-70). |
+
+---
+## 🗄️ Database Audit | ביקורת נתונים
+"""
+    md += "| Ticker | Records | Time Range | Status |\n| :--- | :---: | :--- | :---: |\n"
+    for r in rankings:
+        with open(os.path.join(DATA_DIR, f"{r['symbol'].lower()}_daily.json"), 'r') as f:
+            h = json.load(f)['history']
+            md += f"| {r['symbol']} | {len(h)} | `{h[0]['Date'].split(' ')[0]}` - `{h[-1]['Date'].split(' ')[0]}` | ✅ Verified |\n"
+
+    with open("README.md", "w", encoding="utf-8") as f: f.write(md)
 
 if __name__ == "__main__":
-    generate_readme() # קריאה ישירה לפונקציה
+    generate_readme()

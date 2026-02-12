@@ -6,12 +6,12 @@
     "change": -2.391862464172402,
     "score": 90,
     "signals": [
-      "Uptrend (Above SMA200)",
-      "Price below Bollinger (Dip Buy?)"
+      "\ud83d\udcc8 Uptrend",
+      "\ud83d\uded2 Dip Buy Zone"
     ],
     "rsi": 32.043297729544804,
     "atr": 10.983570643833705,
-    "updated": "2026-02-12 08:22"
+    "updated": "2026-02-12 08:30"
   },
   {
     "symbol": "NVDA",
@@ -20,11 +20,11 @@
     "change": 0.8008962657240435,
     "score": 80,
     "signals": [
-      "Uptrend (Above SMA200)"
+      "\ud83d\udcc8 Uptrend"
     ],
     "rsi": 55.02217923362431,
     "atr": 6.63428715297154,
-    "updated": "2026-02-12 08:22"
+    "updated": "2026-02-12 08:30"
   },
   {
     "symbol": "TSLA",
@@ -33,11 +33,11 @@
     "change": 0.7196438512938912,
     "score": 80,
     "signals": [
-      "Uptrend (Above SMA200)"
+      "\ud83d\udcc8 Uptrend"
     ],
     "rsi": 40.61248159042433,
     "atr": 15.638571602957589,
-    "updated": "2026-02-12 08:22"
+    "updated": "2026-02-12 08:30"
   },
   {
     "symbol": "BRK-B",
@@ -46,11 +46,11 @@
     "change": -0.055966177519225224,
     "score": 80,
     "signals": [
-      "Uptrend (Above SMA200)"
+      "\ud83d\udcc8 Uptrend"
     ],
     "rsi": 61.57055215839851,
     "atr": 8.26214599609375,
-    "updated": "2026-02-12 08:22"
+    "updated": "2026-02-12 08:30"
   },
   {
     "symbol": "LLY",
@@ -59,11 +59,11 @@
     "change": -0.9551198075457318,
     "score": 80,
     "signals": [
-      "Uptrend (Above SMA200)"
+      "\ud83d\udcc8 Uptrend"
     ],
     "rsi": 40.86062611929859,
     "atr": 43.74284144810268,
-    "updated": "2026-02-12 08:22"
+    "updated": "2026-02-12 08:30"
   },
   {
     "symbol": "AVGO",
@@ -72,11 +72,11 @@
     "change": 0.6814731839916641,
     "score": 80,
     "signals": [
-      "Uptrend (Above SMA200)"
+      "\ud83d\udcc8 Uptrend"
     ],
     "rsi": 59.96309157528763,
     "atr": 16.030715942382812,
-    "updated": "2026-02-12 08:22"
+    "updated": "2026-02-12 08:30"
   },
   {
     "symbol": "AAPL",
@@ -85,12 +85,12 @@
     "change": 0.6650129249217156,
     "score": 65,
     "signals": [
-      "Uptrend (Above SMA200)",
-      "Overbought (RSI > 70)"
+      "\ud83d\udcc8 Uptrend",
+      "\ud83d\udd34 Overbought"
     ],
     "rsi": 82.41567758691636,
     "atr": 6.482106632197739,
-    "updated": "2026-02-12 08:22"
+    "updated": "2026-02-12 08:30"
   },
   {
     "symbol": "AMZN",
@@ -99,13 +99,13 @@
     "change": -1.391575565028974,
     "score": 65,
     "signals": [
-      "Downtrend (Below SMA200)",
-      "Oversold (RSI < 30)",
-      "Price below Bollinger (Dip Buy?)"
+      "\ud83d\udcc9 Downtrend",
+      "\ud83d\udfe2 Oversold",
+      "\ud83d\uded2 Dip Buy Zone"
     ],
     "rsi": 24.673592463681203,
     "atr": 8.335000174386161,
-    "updated": "2026-02-12 08:22"
+    "updated": "2026-02-12 08:30"
   },
   {
     "symbol": "MSFT",
@@ -114,11 +114,11 @@
     "change": -2.15355436714035,
     "score": 30,
     "signals": [
-      "Downtrend (Below SMA200)"
+      "\ud83d\udcc9 Downtrend"
     ],
     "rsi": 34.77241085477432,
     "atr": 16.425711495535715,
-    "updated": "2026-02-12 08:22"
+    "updated": "2026-02-12 08:30"
   },
   {
     "symbol": "META",
@@ -127,10 +127,10 @@
     "change": -0.30265510949237223,
     "score": 30,
     "signals": [
-      "Downtrend (Below SMA200)"
+      "\ud83d\udcc9 Downtrend"
     ],
     "rsi": 55.19384554433269,
     "atr": 24.710719517299108,
-    "updated": "2026-02-12 08:22"
+    "updated": "2026-02-12 08:30"
   }
 ]

@@ -6,13 +6,13 @@
 "change": -1.391575565028974,
 "score": 65,
 "signals": [
-"Downtrend (Below SMA200)",
-"Oversold (RSI < 30)",
-"Price below Bollinger (Dip Buy?)"
+"\ud83d\udcc9 Downtrend",
+"\ud83d\udfe2 Oversold",
+"\ud83d\uded2 Dip Buy Zone"
 ],
 "rsi": 24.673592463681203,
 "atr": 8.335000174386161,
-"updated": "2026-02-12 08:22"
+"updated": "2026-02-12 08:30"
 },
 "history": [
 {

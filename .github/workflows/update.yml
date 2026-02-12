@@ -1,38 +1,28 @@
-name: Robust Market Sync
+name: Market Analysis Engine
 on:
   schedule:
-    - cron: '0 * * * 1-5' # כל שעה בימי מסחר
+    - cron: '0 0 * * *' # הרצה יומית (בסוף יום מסחר)
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30 # נותן לסקריפט מספיק זמן לרוץ לאט ובטוח
     permissions:
       contents: write
-      
     steps:
       - uses: actions/checkout@v2
-      
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.9'
-          
-      - name: Install dependencies
+      - name: Install Libs
         run: pip install yfinance pandas numpy
-        
-      - name: Run collector
+      - name: Run Analysis
         run: python collect_ultimate.py
-        
-      - name: Verify Data Generation
-        run: ls -lh data/ # מציג את גודל הקבצים שנוצרו ללוג
-        
-      - name: Commit changes
+      - name: Commit Results
         run: |
-          git config --global user.name 'Market Bot'
+          git config --global user.name 'Analyst Bot'
           git config --global user.email 'bot@market.ai'
           git add data/*.json
-          # ה-flag הזה מונע שגיאה אם אין שינויים
-          git commit -m "Sync Data" || echo "No changes to commit"
+          git commit -m "Daily Market Analysis & Rankings" || exit 0
           git push

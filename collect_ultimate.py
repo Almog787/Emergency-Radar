@@ -2,12 +2,17 @@ import yfinance as yf
 import pandas as pd
 import json
 import os
+import time
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 
-# 10 החברות הגדולות ב-S&P 500 (נכון ל-2024)
-TICKERS = ["MSFT", "AAPL", "NVDA", "GOOGL", "AMZN", "META", "BRK-B", "LLY", "TSLA", "AVGO"]
+# 10 החברות הגדולות
+TICKERS = ["NVDA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "BRK-B", "LLY", "AVGO"]
 DATA_DIR = "data"
+
+# יצירת התיקייה אם לא קיימת
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
 
 class PandasEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -16,80 +21,99 @@ class PandasEncoder(json.JSONEncoder):
         if isinstance(obj, (np.int64, np.int32, np.integer)):
             return int(obj)
         if isinstance(obj, (np.float64, np.float32, np.floating)):
-            return float(obj)
+            return round(float(obj), 2) # עיגול ל-2 ספרות לחסכון במקום
         return super(PandasEncoder, self).default(obj)
 
-def save_json(data, filename):
-    if not os.path.exists(DATA_DIR):
-        os.makedirs(DATA_DIR)
-    path = os.path.join(DATA_DIR, filename)
-    with open(path, 'w') as f:
-        json.dump(data, f, cls=PandasEncoder, indent=0) # indent=0 לחיסכון במקום
-
-def process_stock(symbol):
-    print(f"--- Processing {symbol} ---")
-    stock = yf.Ticker(symbol)
-    
-    # --- חלק 1: היסטוריה מלאה (יומי) ---
-    print(f"Fetching MAX Daily history...")
-    df_daily = stock.history(period="max", interval="1d")
-    
-    # חישוב אינדיקטורים לטווח ארוך
-    df_daily['SMA200'] = df_daily['Close'].rolling(window=200).mean()
-    df_daily['SMA50'] = df_daily['Close'].rolling(window=50).mean()
-    df_daily.reset_index(inplace=True)
-    
-    # שמירת קובץ Macro
-    daily_records = df_daily[['Date', 'Close', 'SMA200', 'SMA50', 'Volume']].to_dict(orient='records')
-    
-    # --- חלק 2: רזולוציה גבוהה (שעתי + דקתי) ---
-    print(f"Fetching Intraday (High Res)...")
-    
-    # נתונים שעתיים (שנתיים אחרונות - המקסימום של יאהו)
-    df_hourly = stock.history(period="2y", interval="1h")
-    
-    # נתונים דקתיים (7 ימים אחרונים - המקסימום של יאהו)
-    df_minute = stock.history(period="7d", interval="1m")
-    
-    # מיזוג: עדיפות לדקות היכן שיש, ושעות לשאר
-    df_high_res = pd.concat([df_hourly, df_minute])
-    df_high_res = df_high_res[~df_high_res.index.duplicated(keep='last')] # הסרת כפילויות
-    df_high_res.sort_index(inplace=True)
-    
-    # חישוב RSI לטווח קצר
-    delta = df_high_res['Close'].diff()
+def get_indicators(df):
+    # RSI
+    delta = df['Close'].diff()
     gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
     rs = gain / loss
-    df_high_res['RSI'] = 100 - (100 / (1 + rs))
+    df['RSI'] = 100 - (100 / (1 + rs))
     
-    df_high_res.reset_index(inplace=True)
-    col_name = 'Datetime' if 'Datetime' in df_high_res.columns else 'Date'
+    # SMA
+    df['SMA200'] = df['Close'].rolling(window=200).mean()
+    return df.fillna(0)
+
+def save_safe(data, filename):
+    path = os.path.join(DATA_DIR, filename)
+    try:
+        with open(path, 'w') as f:
+            json.dump(data, f, cls=PandasEncoder, indent=0)
+        print(f"SUCCESS: Saved {filename}")
+    except Exception as e:
+        print(f"ERROR saving {filename}: {e}")
+
+def process_stock(symbol):
+    print(f"\n--- Starting {symbol} ---")
     
-    # שמירת קובץ Micro
-    # שומרים רק את ה-2000 נקודות האחרונות כדי שהדפדפן לא יקרוס
-    intraday_records = df_high_res.tail(2000)[[col_name, 'Close', 'RSI', 'Volume']].to_dict(orient='records')
+    try:
+        stock = yf.Ticker(symbol)
+        
+        # 1. נתונים יומיים (היסטוריה מלאה)
+        # ננסה למשוך, אם נכשל - נחזיר הודעת שגיאה ולא נקריס
+        try:
+            df_daily = stock.history(period="max", interval="1d")
+            if df_daily.empty: raise Exception("No daily data returned")
+            
+            df_daily = get_indicators(df_daily)
+            df_daily.reset_index(inplace=True)
+            
+            # שמירה יעילה - רק עמודות נחוצות
+            daily_data = df_daily[['Date', 'Close', 'SMA200', 'RSI']].tail(5000).to_dict(orient='records') # מגביל ל-5000 ימים אחרונים למניעת עומס
+        except Exception as e:
+            print(f"Failed fetching Daily for {symbol}: {e}")
+            daily_data = []
 
-    # מידע כללי
-    info = stock.info
-    metadata = {
-        "symbol": symbol,
-        "name": info.get("longName", symbol),
-        "market_cap": info.get("marketCap", 0),
-        "pe_ratio": info.get("trailingPE", 0),
-        "sector": info.get("sector", "N/A"),
-        "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M")
-    }
+        # השהייה קצרה למניעת חסימה
+        time.sleep(1)
 
-    # יצירת אובייקט סופי ושמירה בשני קבצים נפרדים
-    save_json({"meta": metadata, "data": daily_records}, f"{symbol}_daily.json")
-    save_json({"meta": metadata, "data": intraday_records}, f"{symbol}_intraday.json")
-    
-    print(f"Saved {symbol}: Daily ({len(daily_records)}), Intraday ({len(intraday_records)})")
+        # 2. נתונים תוך-יומיים (דקות)
+        try:
+            # במקום 7 ימים, נבקש 5 ימים כדי להקטין עומס וסיכון ל-Timeout
+            df_intra = stock.history(period="5d", interval="1m")
+            
+            if not df_intra.empty:
+                df_intra = get_indicators(df_intra)
+                df_intra.reset_index(inplace=True)
+                # תיקון שם עמודת זמן
+                time_col = 'Datetime' if 'Datetime' in df_intra.columns else 'Date'
+                df_intra.rename(columns={time_col: 'Date'}, inplace=True)
+                
+                intraday_data = df_intra[['Date', 'Close', 'SMA200', 'RSI']].tail(2000).to_dict(orient='records')
+            else:
+                intraday_data = []
+        except Exception as e:
+            print(f"Failed fetching Intraday for {symbol}: {e}")
+            intraday_data = []
 
+        # 3. מטא-דאטה (מידע כללי)
+        try:
+            info = stock.info
+            meta = {
+                "symbol": symbol,
+                "name": info.get("longName", symbol),
+                "price": info.get("currentPrice", 0),
+                "sector": info.get("sector", "N/A"),
+                "updated": datetime.now().strftime("%Y-%m-%d %H:%M")
+            }
+        except:
+            meta = {"symbol": symbol, "updated": datetime.now().strftime("%Y-%m-%d %H:%M")}
+
+        # שמירת הקבצים - רק אם יש נתונים
+        if daily_data:
+            save_safe({"meta": meta, "data": daily_data}, f"{symbol}_daily.json")
+        
+        if intraday_data:
+            save_safe({"meta": meta, "data": intraday_data}, f"{symbol}_intraday.json")
+
+    except Exception as e:
+        print(f"CRITICAL FAIL on {symbol}: {e}")
+
+# ריצה ראשית עם השהיות
 if __name__ == "__main__":
     for ticker in TICKERS:
-        try:
-            process_stock(ticker)
-        except Exception as e:
-            print(f"Error on {ticker}: {e}")
+        process_stock(ticker)
+        print(f"Sleeping 2s to respect API limits...")
+        time.sleep(2) # השהייה קריטית בין מניות

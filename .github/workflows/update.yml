@@ -1,11 +1,16 @@
 name: NVDA Intel Update
 on:
   schedule:
-    - cron: '0 * * * *' # עדכון בכל שעה
+    - cron: '0 * * * *' 
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    # הוסף את הבלוק הבא:
+    permissions:
+      contents: write
+      
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python

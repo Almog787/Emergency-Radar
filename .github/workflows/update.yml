@@ -1,32 +1,66 @@
-name: Market Intelligence Update
+name: Market Intelligence System
+
 on:
+  # הרצה אוטומטית: כל 15 דקות בשעות המסחר (שני-שישי)
   schedule:
-    - cron: '*/15 13-21 * * 1-5' # כל 15 דקות בזמן המסחר בארה"ב
+    - cron: '*/15 13-21 * * 1-5'
+  
+  # הרצה ידנית עם שליטה מלאה
   workflow_dispatch:
+    inputs:
+      run_collect:
+        description: 'Run Data Collection (Step 1)'
+        type: boolean
+        default: true
+      run_readme:
+        description: 'Generate README & Charts (Step 2)'
+        type: boolean
+        default: true
+      delay_seconds:
+        description: 'Delay between steps (seconds)'
+        required: true
+        default: '15'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      
     steps:
       - uses: actions/checkout@v3
+      
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
+          
       - name: Install Libs
         run: pip install yfinance pandas numpy matplotlib
-      - name: Step 1 - Data Sync
+        
+      # --- שלב 1: איסוף נתונים ---
+      # רץ אם זו ריצה אוטומטית, או אם המשתמש סימן את התיבה
+      - name: Step 1 - Data Collection
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.run_collect == 'true' }}
         run: python collect_data.py
-      - name: Step 2 - Wait
-        run: sleep 40
-      - name: Step 3 - Update README
+        
+      # --- שלב ביניים: המתנה ---
+      # רץ רק אם שני השלבים מופעלים (כדי למנוע התנגשות קבצים)
+      - name: Wait for File System
+        if: ${{ github.event_name == 'schedule' || (github.event.inputs.run_collect == 'true' && github.event.inputs.run_readme == 'true') }}
+        run: sleep ${{ github.event.inputs.delay_seconds || 15 }}
+        
+      # --- שלב 2: יצירת תצוגה ---
+      # רץ אם זו ריצה אוטומטית, או אם המשתמש סימן את התיבה
+      - name: Step 2 - Generate Visuals & README
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.run_readme == 'true' }}
         run: python create_readme.py
-      - name: Commit Results
+        
+      # --- שלב 3: שמירה ---
+      - name: Commit and Push Results
         run: |
           git config --global user.name 'Market-Bot'
           git config --global user.email 'bot@market.ai'
-          git add data/*.json charts/*.png README.md
-          git commit -m "Intraday System Update [Skip CI]" || echo "No changes"
+          git add data/*.json charts/*.png README.md || true
+          git commit -m "Market System Update [Skip CI]" || echo "No changes"
           git push

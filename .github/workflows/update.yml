@@ -1,64 +1,39 @@
-name: Market Intelligence System
-
+name: Market Intelligence Update
 on:
-  # הרצה אוטומטית בכל 15 דקות בשעות המסחר (שני-שישי)
   schedule:
     - cron: '*/15 13-21 * * 1-5'
-  
-  # הרצה ידנית
   workflow_dispatch:
-    inputs:
-      run_collect:
-        description: 'Run Data Collection (Step 1)'
-        type: boolean
-        default: true
-      run_readme:
-        description: 'Generate README & Charts (Step 2)'
-        type: boolean
-        default: true
-      delay_seconds:
-        description: 'Delay between steps'
-        required: true
-        default: '15'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      
     steps:
       - uses: actions/checkout@v3
       
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10' # מומלץ לעבור ל-3.10 ליציבות
+          python-version: '3.10'
           
       - name: Install Libs
-        run: |
-          python -m pip install --upgrade pip
-          # התקנת כל הספריות הדרושות, כולל mplfinance החדשה
-          pip install yfinance pandas numpy matplotlib mplfinance
+        run: pip install yfinance pandas numpy matplotlib mplfinance
         
-      # שלב 1: איסוף נתונים
       - name: Step 1 - Data Collection
-        if: ${{ github.event_name == 'schedule' || github.event.inputs.run_collect == 'true' }}
         run: python collect_data.py
         
-      - name: Wait for Sync
-        run: sleep ${{ github.event.inputs.delay_seconds || 15 }}
+      - name: Step 2 - Wait
+        run: sleep 15
         
-      # שלב 2: יצירת תמונות ו-README
-      - name: Step 2 - Generate Visuals & README
-        if: ${{ github.event_name == 'schedule' || github.event.inputs.run_readme == 'true' }}
+      - name: Step 3 - Generate Visuals
         run: python create_readme.py
         
-      # שלב 3: שמירה ל-GitHub
       - name: Commit and Push Results
         run: |
           git config --global user.name 'Market-Bot'
           git config --global user.email 'bot@market.ai'
-          git add data/*.json charts/*.png README.md || true
-          git commit -m "Automated Market Refresh [Skip CI]" || echo "No changes"
+          # git add -A מוודא שכל קובץ חדש בתיקיית charts יתווסף
+          git add -A
+          git commit -m "Update charts and README [Skip CI]" || echo "No changes"
           git push

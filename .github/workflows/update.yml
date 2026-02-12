@@ -1,0 +1,25 @@
+name: NVDA Intel Update
+on:
+  schedule:
+    - cron: '0 * * * *' # עדכון בכל שעה
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: pip install yfinance pandas
+      - name: Run collector
+        run: python collect_nvda.py
+      - name: Commit changes
+        run: |
+          git config --global user.name 'NVDA Bot'
+          git config --global user.email 'bot@nvda.ai'
+          git add nvda_intel.json
+          git commit -m "Update NVDA Intelligence" || exit 0
+          git push

@@ -3,9 +3,19 @@
 
 ## 🚀 [Click Here to Open Live Dashboard](https://almog787.github.io/Stock-information-/)
 
-> 🔄 **Last Updated:** 2026-02-12 08:38 UTC
+> 🔄 **Last Updated:** 2026-02-12 09:00 UTC
 
-## 🏆 Top Opportunities (Live Analysis)
+## 🏆 Top 3 Opportunities (Charts)
+### 1. GOOGL (Score: 90)
+![GOOGL Chart](charts/GOOGL.png)
+
+### 2. NVDA (Score: 80)
+![NVDA Chart](charts/NVDA.png)
+
+### 3. TSLA (Score: 80)
+![TSLA Chart](charts/TSLA.png)
+
+## 📋 Full Market Rankings
 | Rank | Ticker | Price | Change | AI Score | Signal |
 | :--: | :----: | :---: | :----: | :------: | :----- |
 | 1 | **GOOGL** | $310.96 | 🔴 -2.39% | 🚀 **90** | 📈 Uptrend, 🛒 Dip Buy Zone |

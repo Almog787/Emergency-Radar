@@ -1,8 +1,8 @@
 name: Market Analysis Engine
 on:
   schedule:
-    - cron: '0 0 * * *' # פעם ביום
-  workflow_dispatch:
+    - cron: '0 0 * * *' # הרצה פעם ביום
+  workflow_dispatch: # מאפשר הרצה ידנית של הכל
 
 jobs:
   build:
@@ -20,18 +20,23 @@ jobs:
       - name: Install Libs
         run: pip install yfinance pandas numpy matplotlib
         
-      # שלב 1: איסוף נתונים
-      - name: Run Data Collection
+      # --- שלב 1: הרצת איסוף נתונים ---
+      - name: Step 1 - Data Collection
         run: python collect_data.py
         
-      # שלב 2: יצירת תמונות ו-README
-      - name: Generate Visuals & README
+      # --- שלב ביניים: המתנה (40 שניות) ---
+      - name: Wait for Data Stabilization
+        run: sleep 40
+        
+      # --- שלב 2: הרצת עיצוב README וגרפים ---
+      - name: Step 2 - Generate Visuals & README
         run: python create_readme.py
         
-      - name: Commit Results
+      # --- שלב 3: העלאת תוצאות ל-GitHub ---
+      - name: Commit and Push Results
         run: |
           git config --global user.name 'Analyst Bot'
           git config --global user.email 'bot@market.ai'
           git add data/*.json charts/*.png README.md
-          git commit -m "Daily Market Update" || exit 0
+          git commit -m "Daily Market Data and README Refresh" || echo "No changes to commit"
           git push

@@ -1,9 +1,8 @@
-name: Hourly Market Update
+name: Intraday Market Update
 on:
   schedule:
-    # רץ בכל שעה עגולה, בימים ב'-ו', בין השעות 14:00 ל-21:00 UTC (שעות המסחר בארה"ב)
-    - cron: '0 14-21 * * 1-5'
-  workflow_dispatch: # מאפשר הרצה ידנית
+    - cron: '*/15 * * * *' # רץ כל 15 דקות
+  workflow_dispatch:
 
 jobs:
   build:
@@ -18,12 +17,12 @@ jobs:
           python-version: '3.9'
       - name: Install dependencies
         run: pip install yfinance pandas numpy
-      - name: Run hourly collector
+      - name: Run intraday collector
         run: python collect_market.py
       - name: Commit changes
         run: |
-          git config --global user.name 'Hourly Market Bot'
+          git config --global user.name 'Intraday Bot'
           git config --global user.email 'bot@market.ai'
           git add data/*.json
-          git commit -m "Hourly Market Data Sync [Automated]" || exit 0
+          git commit -m "Intraday Market Data Sync" || exit 0
           git push

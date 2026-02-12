@@ -18,7 +18,7 @@ class PandasEncoder(json.JSONEncoder):
         return super(PandasEncoder, self).default(obj)
 
 def calculate_manual_indicators(df):
-    # RSI Manual Calculation
+    # RSI
     delta = df['Close'].diff()
     gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
@@ -29,54 +29,53 @@ def calculate_manual_indicators(df):
     df['SMA200'] = df['Close'].rolling(window=200).mean()
     return df.fillna(0)
 
-def calculate_score(row):
-    score = 50
-    signals = []
-    if row['Close'] > row['SMA200']:
-        score += 20
-        signals.append("📈 Uptrend")
-    else:
-        score -= 20
-        signals.append("📉 Downtrend")
-    if row['RSI'] < 30:
-        score += 15
-        signals.append("🟢 Oversold")
-    elif row['RSI'] > 70:
-        score -= 15
-        signals.append("🔴 Overbought")
-    return max(0, min(100, score)), signals
-
-def process_market():
-    rankings = []
-    for symbol in TICKERS:
-        print(f"Processing {symbol}...")
+def process_ticker(symbol):
+    file_path = os.path.join(DATA_DIR, f"{symbol.lower()}_daily.json")
+    stock = yf.Ticker(symbol)
+    
+    # 1. טעינת המאגר הקיים מהדיסק (אם קיים)
+    existing_df = pd.DataFrame()
+    if os.path.exists(file_path):
         try:
-            stock = yf.Ticker(symbol)
-            df = stock.history(period="2y", interval="1d")
-            if df.empty: continue
-            df = calculate_manual_indicators(df)
-            df.reset_index(inplace=True)
-            
-            latest = df.iloc[-1]
-            score, signals = calculate_score(latest)
-            
-            meta = {
-                "symbol": symbol, "name": stock.info.get("longName", symbol),
-                "price": latest['Close'], "change": ((latest['Close'] - df.iloc[-2]['Close']) / df.iloc[-2]['Close']) * 100,
-                "score": score, "signals": signals, "rsi": latest['RSI'],
-                "updated": datetime.now().strftime("%Y-%m-%d %H:%M")
-            }
-            
-            history_data = df[['Date', 'Close', 'SMA200', 'SMA50', 'Volume']].tail(1000).to_dict(orient='records')
-            with open(os.path.join(DATA_DIR, f"{symbol.lower()}_daily.json"), 'w') as f:
-                json.dump({"meta": meta, "history": history_data}, f, cls=PandasEncoder, indent=0)
-            rankings.append(meta)
-            time.sleep(1)
-        except Exception as e: print(f"Error {symbol}: {e}")
+            with open(file_path, 'r') as f:
+                old_data = json.load(f)
+                existing_df = pd.DataFrame(old_data['history'])
+                existing_df['Date'] = pd.to_datetime(existing_df['Date'])
+        except:
+            print(f"Could not load old data for {symbol}")
 
-    rankings.sort(key=lambda x: x['score'], reverse=True)
-    with open(os.path.join(DATA_DIR, "market_rankings.json"), 'w') as f:
-        json.dump(rankings, f, cls=PandasEncoder, indent=2)
+    # 2. משיכת נתונים חדשים (רק החודש האחרון כדי לעדכן)
+    new_data = stock.history(period="1mo", interval="1d")
+    if new_data.empty: return
+    new_data.reset_index(inplace=True)
+    new_data['Date'] = pd.to_datetime(new_data['Date'])
+
+    # 3. מיזוג (Merging)
+    # אנחנו מחברים את הטבלאות ומוחקים כפילויות לפי תאריך
+    combined_df = pd.concat([existing_df, new_data]).drop_duplicates(subset=['Date'], keep='last')
+    combined_df = combined_df.sort_values('Date')
+
+    # 4. חישוב אינדיקטורים מחדש על כל המאגר המאוחד (חובה לדיוק)
+    combined_df = calculate_manual_indicators(combined_df)
+
+    # 5. הכנת פלט
+    latest = combined_df.iloc[-1]
+    meta = {
+        "symbol": symbol,
+        "name": stock.info.get("longName", symbol),
+        "price": latest['Close'],
+        "score": 50, # כאן אפשר להוסיף את לוגיקת הציון
+        "rsi": latest['RSI'],
+        "updated": datetime.now().strftime("%Y-%m-%d %H:%M")
+    }
+    
+    # שמירת כל ההיסטוריה המצטברת
+    history_data = combined_df[['Date', 'Close', 'SMA200', 'SMA50', 'Volume']].to_dict(orient='records')
+    
+    with open(file_path, 'w') as f:
+        json.dump({"meta": meta, "history": history_data}, f, cls=PandasEncoder, indent=0)
 
 if __name__ == "__main__":
-    process_market()
+    for ticker in TICKERS:
+        process_ticker(ticker)
+        time.sleep(2)

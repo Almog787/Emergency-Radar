@@ -5,7 +5,10 @@ import os
 import numpy as np
 from datetime import datetime
 
-# מקודד מיוחד למניעת שגיאות סריאליזציה של JSON
+# רשימת 10 הגדולות
+TICKERS = ["NVDA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "BRK-B", "LLY", "AVGO"]
+DATA_DIR = "data"
+
 class PandasEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, pd.Timestamp):
@@ -14,75 +17,58 @@ class PandasEncoder(json.JSONEncoder):
             return int(obj)
         if isinstance(obj, (np.float64, np.float32, np.floating)):
             return float(obj)
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
         return super(PandasEncoder, self).default(obj)
 
 def calculate_indicators(df):
-    # RSI 14
     delta = df['Close'].diff()
     gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
     rs = gain / loss
     df['RSI'] = 100 - (100 / (1 + rs))
-    
-    # ממוצעים נעים
-    df['SMA50'] = df['Close'].rolling(window=50).mean()
     df['SMA200'] = df['Close'].rolling(window=200).mean()
-    
-    # ניקוי ערכים לא חוקיים ל-JSON
-    df = df.replace([np.inf, -np.inf], np.nan).fillna(0)
-    return df
+    return df.replace([np.inf, -np.inf], np.nan).fillna(0)
 
-def update_database():
-    file_name = 'nvda_full_history.json'
-    ticker = "NVDA"
-    stock = yf.Ticker(ticker)
-
-    # 1. השגת נתונים
-    if os.path.exists(file_name):
-        print("Updating existing database...")
-        new_data = stock.history(period="1mo", interval="1h")
-        with open(file_name, 'r') as f:
-            old_db = json.load(f)
-            df_old = pd.DataFrame(old_db['history'])
-            df_old['Datetime'] = pd.to_datetime(df_old['Datetime'])
-    else:
-        print("Downloading full history (Max)...")
-        new_data = stock.history(period="max", interval="1d")
-        df_old = pd.DataFrame()
-
-    # 2. עיבוד ומיזוג
-    new_data.reset_index(inplace=True)
-    date_col = 'Date' if 'Date' in new_data.columns else 'Datetime'
-    new_data['Datetime'] = pd.to_datetime(new_data[date_col])
+def process_ticker(symbol):
+    print(f"Processing {symbol}...")
+    stock = yf.Ticker(symbol)
     
-    combined_df = pd.concat([df_old, new_data]).drop_duplicates(subset=['Datetime'], keep='last')
-    combined_df = combined_df.sort_values('Datetime')
+    # יצירת נתיב לקובץ בתוך תיקיית data
+    if not os.path.exists(DATA_DIR):
+        os.makedirs(DATA_DIR)
+    
+    file_path = os.path.join(DATA_DIR, f"{symbol.lower()}_data.json")
+    
+    df = stock.history(period="1y", interval="1d")
+    if df.empty: return
 
-    # 3. חישוב אינדיקטורים
-    combined_df = calculate_indicators(combined_df)
+    df.reset_index(inplace=True)
+    date_col = 'Date' if 'Date' in df else 'Datetime'
+    df['Datetime'] = pd.to_datetime(df[date_col])
+    df = calculate_indicators(df)
     
-    # 4. הכנת פלט
-    latest = combined_df.iloc[-1]
-    df_to_save = combined_df.tail(2000).copy() # שמירה על גודל קובץ סביר
-    
+    latest = df.iloc[-1]
+    history_to_save = df.tail(500).copy()
+    history_to_save['Datetime'] = history_to_save['Datetime'].dt.strftime('%Y-%m-%d')
+
     output = {
         "metadata": {
-            "symbol": ticker,
+            "symbol": symbol,
+            "name": stock.info.get("longName", symbol),
             "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "current_price": latest['Close'],
-            "rsi": latest['RSI'],
-            "sma50": latest['SMA50'],
-            "sma200": latest['SMA200'],
+            "current_price": float(latest['Close']),
+            "rsi": float(latest['RSI']),
+            "sma200": float(latest['SMA200']),
             "recommendation": str(stock.info.get("recommendationKey", "N/A"))
         },
-        "history": df_to_save.to_dict(orient='records')
+        "history": history_to_save.to_dict(orient='records')
     }
 
-    with open(file_name, 'w') as f:
+    with open(file_path, 'w') as f:
         json.dump(output, f, indent=2, cls=PandasEncoder)
 
 if __name__ == "__main__":
-    update_database()
-    print("Database updated successfully.")
+    for ticker in TICKERS:
+        try:
+            process_ticker(ticker)
+        except Exception as e:
+            print(f"Failed to process {ticker}: {e}")

@@ -2,107 +2,202 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>High-Frequency Market Terminal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WallStreet Pro | Ultimate Data</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@400;700;800&display=swap');
-        body { font-family: 'Assistant', sans-serif; background-color: #000; color: #fff; }
-        .card { background: #111; border: 1px solid #222; }
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;700&family=JetBrains+Mono&display=swap');
+        body { background: #0b0c10; color: #c5c6c7; font-family: 'Assistant', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .card { background: #1f2833; border: 1px solid #45a29e; border-radius: 8px; }
+        .btn-active { background: #66fcf1; color: #0b0c10; font-weight: bold; }
+        .btn-inactive { background: transparent; color: #66fcf1; border: 1px solid #66fcf1; }
     </style>
 </head>
-<body class="p-4">
-    <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-6 bg-[#16161d] p-4 rounded-2xl">
-            <h1 class="text-xl font-black uppercase tracking-tight">Intraday <span class="text-emerald-500">Terminal</span></h1>
-            <select id="ticker-select" onchange="loadData(this.value)" class="bg-[#1a1a24] text-white px-4 py-2 rounded-xl font-bold">
-                <option value="nvda">NVIDIA</option>
-                <option value="aapl">APPLE</option>
-                <option value="msft">MICROSOFT</option>
+<body class="p-6">
+
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-[#45a29e] pb-6">
+        <div>
+            <h1 class="text-3xl font-black text-[#66fcf1] uppercase tracking-widest">Market<span class="text-white">Master</span></h1>
+            <p class="text-xs text-slate-400">Database: Max History + Intraday Precision</p>
+        </div>
+        
+        <div class="flex gap-4 items-center">
+            <select id="ticker-select" onchange="switchTicker()" class="bg-[#0b0c10] border border-[#66fcf1] text-[#66fcf1] px-4 py-2 rounded font-bold outline-none">
+                <option value="NVDA">NVIDIA</option>
+                <option value="AAPL">APPLE</option>
+                <option value="MSFT">MICROSOFT</option>
+                <option value="GOOGL">GOOGLE</option>
+                <option value="AMZN">AMAZON</option>
+                <option value="META">META</option>
+                <option value="TSLA">TESLA</option>
+                <option value="BRK-B">BERKSHIRE</option>
+                <option value="LLY">ELI LILLY</option>
+                <option value="AVGO">BROADCOM</option>
             </select>
         </div>
+    </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <!-- Signal -->
-            <div class="lg:col-span-1 card p-6 rounded-2xl text-center">
-                <div class="text-[10px] text-slate-500 uppercase font-bold mb-4">Real-Time Signal (1m RSI)</div>
-                <div id="signal-text" class="text-5xl font-black mb-2 italic">---</div>
-                <div class="flex justify-between mt-6 pt-6 border-t border-white/10">
-                    <span class="text-xs text-slate-400">מחיר:</span><b id="price">---</b>
-                </div>
-                <div class="flex justify-between mt-2">
-                    <span class="text-xs text-slate-400">RSI:</span><b id="rsi-val">---</b>
-                </div>
+    <!-- Main Grid -->
+    <div class="grid grid-cols-12 gap-6">
+        
+        <!-- Sidebar Info -->
+        <div class="col-span-12 md:col-span-3 space-y-6">
+            <div class="card p-6 text-center">
+                <div class="text-xs uppercase text-slate-400 font-bold mb-2">מחיר אחרון</div>
+                <div id="price" class="text-4xl font-black text-white mono">---</div>
+                <div id="sector" class="text-xs text-[#45a29e] mt-2 font-bold">---</div>
             </div>
 
-            <!-- Chart -->
-            <div class="lg:col-span-3 card p-6 rounded-2xl">
-                <h2 id="comp-name" class="text-lg font-bold mb-4 text-emerald-400">---</h2>
-                <div class="h-[450px]"><canvas id="mainChart"></canvas></div>
+            <div class="card p-6">
+                <h3 class="font-bold text-[#66fcf1] mb-4 border-b border-slate-600 pb-2">נתונים טכניים</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between"><span>RSI (14):</span> <span id="rsi" class="mono font-bold">---</span></div>
+                    <div class="flex justify-between"><span>SMA 200:</span> <span id="sma" class="mono font-bold">---</span></div>
+                    <div class="flex justify-between"><span>שווי שוק:</span> <span id="mcap" class="mono font-bold">---</span></div>
+                    <div class="flex justify-between"><span>מכפיל רווח:</span> <span id="pe" class="mono font-bold">---</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Area -->
+        <div class="col-span-12 md:col-span-9 card p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="chart-title" class="text-xl font-bold text-white">היסטוריה מלאה (All Time)</h2>
+                <div class="flex gap-2">
+                    <button onclick="loadView('daily')" id="btn-daily" class="px-4 py-1 rounded text-xs transition btn-active">כל הזמנים</button>
+                    <button onclick="loadView('intraday')" id="btn-intra" class="px-4 py-1 rounded text-xs transition btn-inactive">זמן אמת (דקות)</button>
+                </div>
+            </div>
+            <div class="h-[500px] w-full">
+                <canvas id="mainChart"></canvas>
             </div>
         </div>
     </div>
 
     <script>
         let myChart = null;
+        let currentView = 'daily';
+        let currentSymbol = 'NVDA';
 
-        async function loadData(symbol) {
+        function switchTicker() {
+            currentSymbol = document.getElementById('ticker-select').value;
+            loadView(currentView);
+        }
+
+        async function loadView(viewType) {
+            currentView = viewType;
+            
+            // עדכון כפתורים
+            document.getElementById('btn-daily').className = viewType === 'daily' ? 'px-4 py-1 rounded text-xs transition btn-active' : 'px-4 py-1 rounded text-xs transition btn-inactive';
+            document.getElementById('btn-intra').className = viewType === 'intraday' ? 'px-4 py-1 rounded text-xs transition btn-active' : 'px-4 py-1 rounded text-xs transition btn-inactive';
+            
+            document.getElementById('chart-title').innerText = viewType === 'daily' ? `היסטוריה מלאה - ${currentSymbol}` : `מסחר תוך יומי - ${currentSymbol}`;
+
             try {
-                const res = await fetch(`data/${symbol}_intraday_data.json?v=${Date.now()}`);
-                const data = await res.json();
-                updateUI(data);
+                // טעינת הקובץ הנכון (Daily או Intraday)
+                const fileName = viewType === 'daily' ? `${currentSymbol}_daily.json` : `${currentSymbol}_intraday.json`;
+                const res = await fetch(`data/${fileName}?v=${Date.now()}`);
+                const json = await res.json();
+                
+                updateUI(json.meta, json.data, viewType);
             } catch (e) {
-                // Handle error
+                console.error(e);
+                alert("נתונים בטעינה... וודא שהבוט סיים לרוץ בגיטהאב.");
             }
         }
 
-        function updateUI(data) {
-            const m = data.metadata;
-            const h = data.history;
+        function updateUI(meta, data, type) {
+            // עדכון סרגל צד (תמיד לוקח מהקובץ הנוכחי)
+            const last = data[data.length - 1];
+            document.getElementById('price').innerText = `$${parseFloat(last.Close).toFixed(2)}`;
+            document.getElementById('sector').innerText = meta.sector;
+            
+            // נתונים פונדמנטליים (רק אם קיימים)
+            document.getElementById('mcap').innerText = formatNumber(meta.market_cap);
+            document.getElementById('pe').innerText = meta.pe_ratio ? meta.pe_ratio.toFixed(2) : '-';
+            
+            // נתונים טכניים (משתנים לפי הקובץ)
+            if(type === 'daily') {
+                document.getElementById('sma').innerText = last.SMA200 ? last.SMA200.toFixed(2) : 'N/A';
+                document.getElementById('rsi').innerText = '-'; // RSI יומי פחות קריטי בטבלה
+            } else {
+                document.getElementById('sma').innerText = '-';
+                document.getElementById('rsi').innerText = last.RSI ? last.RSI.toFixed(2) : '-';
+            }
 
-            document.getElementById('comp-name').innerText = m.name;
-            document.getElementById('price').innerText = `$${m.current_price.toFixed(2)}`;
-            document.getElementById('rsi-val').innerText = m.rsi.toFixed(2);
-
-            // Signal
-            const sig = document.getElementById('signal-text');
-            if(m.rsi < 30) { sig.innerText = "BUY"; sig.className = "text-5xl font-black text-emerald-500 italic"; }
-            else if(m.rsi > 70) { sig.innerText = "SELL"; sig.className = "text-5xl font-black text-rose-500 italic"; }
-            else { sig.innerText = "HOLD"; sig.className = "text-5xl font-black text-slate-500 italic"; }
-
-            renderChart(h.slice(-500)); // הצגת 500 הדקות האחרונות
+            renderChart(data, type);
         }
 
-        function renderChart(history) {
+        function renderChart(data, type) {
             const ctx = document.getElementById('mainChart').getContext('2d');
-            if(myChart) myChart.destroy();
+            if (myChart) myChart.destroy();
+
+            // זיהוי שדות זמן ומחיר (משתנה בין הקבצים)
+            const labels = data.map(d => d.Date || d.Datetime);
+            const prices = data.map(d => d.Close);
             
+            const datasets = [{
+                label: 'Price',
+                data: prices,
+                borderColor: '#66fcf1',
+                borderWidth: 1.5,
+                pointRadius: 0,
+                fill: true,
+                backgroundColor: 'rgba(102, 252, 241, 0.05)',
+                tension: 0.1
+            }];
+
+            // הוספת SMA200 רק בגרף היומי
+            if (type === 'daily') {
+                datasets.push({
+                    label: 'SMA 200',
+                    data: data.map(d => d.SMA200),
+                    borderColor: '#f59e0b',
+                    borderWidth: 1,
+                    pointRadius: 0,
+                    fill: false
+                });
+            }
+
             myChart = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels: history.map(row => row.Datetime),
-                    datasets: [{
-                        label: 'Price',
-                        data: history.map(row => row.Close),
-                        borderColor: '#10b981',
-                        borderWidth: 1.5,
-                        pointRadius: 0
-                    }]
-                },
+                data: { labels: labels, datasets: datasets },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
                     scales: {
-                        x: { type: 'time', time: { unit: 'hour' }, display: true, ticks: { color: '#666' } },
-                        y: { grid: { color: '#222' }, ticks: { color: '#888' } }
+                        x: { 
+                            type: 'time', 
+                            time: { unit: type === 'daily' ? 'year' : 'hour' },
+                            grid: { display: false },
+                            ticks: { color: '#888' }
+                        },
+                        y: { 
+                            grid: { color: '#333' },
+                            ticks: { color: '#888' }
+                        }
                     },
                     plugins: { legend: { display: false } }
                 }
             });
         }
 
-        window.onload = () => loadData('nvda');
+        function formatNumber(num) {
+            if (!num) return "-";
+            if (num >= 1.0e+12) return (num / 1.0e+12).toFixed(2) + "T";
+            if (num >= 1.0e+9) return (num / 1.0e+9).toFixed(2) + "B";
+            if (num >= 1.0e+6) return (num / 1.0e+6).toFixed(2) + "M";
+            return num;
+        }
+
+        // Init
+        loadView('daily');
     </script>
 </body>
 </html>

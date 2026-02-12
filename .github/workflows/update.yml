@@ -7,7 +7,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # הוסף את הבלוק הבא:
     permissions:
       contents: write
       
@@ -18,13 +17,13 @@ jobs:
         with:
           python-version: '3.9'
       - name: Install dependencies
-        run: pip install yfinance pandas
+        run: pip install yfinance pandas numpy
       - name: Run collector
         run: python collect_nvda.py
       - name: Commit changes
         run: |
           git config --global user.name 'NVDA Bot'
           git config --global user.email 'bot@nvda.ai'
-          git add nvda_intel.json
-          git commit -m "Update NVDA Intelligence" || exit 0
+          git add nvda_full_history.json
+          git commit -m "Update NVDA Full History [Automated]" || exit 0
           git push

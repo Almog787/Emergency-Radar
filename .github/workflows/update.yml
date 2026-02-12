@@ -1,11 +1,11 @@
 name: Market Intelligence System
 
 on:
-  # הרצה אוטומטית: כל 15 דקות בשעות המסחר (שני-שישי)
+  # הרצה אוטומטית בכל 15 דקות בשעות המסחר (שני-שישי)
   schedule:
     - cron: '*/15 13-21 * * 1-5'
   
-  # הרצה ידנית עם שליטה מלאה
+  # הרצה ידנית
   workflow_dispatch:
     inputs:
       run_collect:
@@ -17,7 +17,7 @@ on:
         type: boolean
         default: true
       delay_seconds:
-        description: 'Delay between steps (seconds)'
+        description: 'Delay between steps'
         required: true
         default: '15'
 
@@ -33,34 +33,32 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.10' # מומלץ לעבור ל-3.10 ליציבות
           
       - name: Install Libs
-        run: pip install yfinance pandas numpy matplotlib
+        run: |
+          python -m pip install --upgrade pip
+          # התקנת כל הספריות הדרושות, כולל mplfinance החדשה
+          pip install yfinance pandas numpy matplotlib mplfinance
         
-      # --- שלב 1: איסוף נתונים ---
-      # רץ אם זו ריצה אוטומטית, או אם המשתמש סימן את התיבה
+      # שלב 1: איסוף נתונים
       - name: Step 1 - Data Collection
         if: ${{ github.event_name == 'schedule' || github.event.inputs.run_collect == 'true' }}
         run: python collect_data.py
         
-      # --- שלב ביניים: המתנה ---
-      # רץ רק אם שני השלבים מופעלים (כדי למנוע התנגשות קבצים)
-      - name: Wait for File System
-        if: ${{ github.event_name == 'schedule' || (github.event.inputs.run_collect == 'true' && github.event.inputs.run_readme == 'true') }}
+      - name: Wait for Sync
         run: sleep ${{ github.event.inputs.delay_seconds || 15 }}
         
-      # --- שלב 2: יצירת תצוגה ---
-      # רץ אם זו ריצה אוטומטית, או אם המשתמש סימן את התיבה
+      # שלב 2: יצירת תמונות ו-README
       - name: Step 2 - Generate Visuals & README
         if: ${{ github.event_name == 'schedule' || github.event.inputs.run_readme == 'true' }}
         run: python create_readme.py
         
-      # --- שלב 3: שמירה ---
+      # שלב 3: שמירה ל-GitHub
       - name: Commit and Push Results
         run: |
           git config --global user.name 'Market-Bot'
           git config --global user.email 'bot@market.ai'
           git add data/*.json charts/*.png README.md || true
-          git commit -m "Market System Update [Skip CI]" || echo "No changes"
+          git commit -m "Automated Market Refresh [Skip CI]" || echo "No changes"
           git push

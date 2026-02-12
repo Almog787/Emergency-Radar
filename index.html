@@ -2,105 +2,223 @@
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuantIntel Pro Terminal</title>
+    
+    <!-- Scripts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;600;800&family=JetBrains+Mono&display=swap');
-        body { background: #020617; color: #f1f5f9; font-family: 'Assistant', sans-serif; }
-        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        
+        body { 
+            background-color: #020617; 
+            color: #f1f5f9; 
+            font-family: 'Assistant', sans-serif; 
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .glass { 
+            background: rgba(15, 23, 42, 0.8); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+        }
+
+        /* סרגל גלילה מעוצב */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+        .active-stock {
+            background: rgba(59, 130, 246, 0.1);
+            border-right: 4px solid #3b82f6;
+        }
+
+        [dir="rtl"] .active-stock {
+            border-right: 0;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .tab-btn { padding: 8px 16px; font-size: 12px; font-weight: bold; transition: 0.3s; }
+        .tab-active { background: #3b82f6; color: white; border-radius: 8px; }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden">
-    <header class="h-16 glass border-b border-white/10 flex items-center justify-between px-6 shrink-0">
+<body class="flex flex-col">
+
+    <!-- Top Navigation -->
+    <header class="h-16 glass border-b border-white/10 flex items-center justify-between px-6 shrink-0 z-50">
         <div class="flex items-center gap-3">
-            <div class="bg-blue-600 p-2 rounded-lg shadow-lg"><i class="fas fa-brain text-white"></i></div>
-            <h1 class="font-black text-lg tracking-tighter uppercase">QUANT<span class="text-blue-500">INTEL</span></h1>
-        </div>
-        <div class="flex items-center gap-4">
-            <div class="flex bg-slate-800 rounded-full p-1">
-                <button onclick="setLang('en')" id="btn-en" class="px-3 py-1 text-[10px] font-bold rounded-full bg-blue-600 text-white">EN</button>
-                <button onclick="setLang('he')" id="btn-he" class="px-3 py-1 text-[10px] font-bold rounded-full text-slate-400">עב</button>
+            <div class="bg-blue-600 p-2 rounded-lg shadow-lg">
+                <i class="fas fa-chart-line text-white"></i>
             </div>
-            <div id="clock" class="text-xs font-bold mono text-slate-400">00:00:00</div>
+            <h1 class="font-black text-xl tracking-tighter uppercase italic">QuantIntel <span class="text-blue-500">Pro</span></h1>
+        </div>
+
+        <div class="flex items-center gap-6">
+            <div class="flex bg-slate-800 rounded-lg p-1 border border-white/5">
+                <button onclick="setLang('en')" id="btn-en" class="px-3 py-1 text-[10px] font-bold rounded-md transition-all bg-blue-600 text-white border-blue-500 shadow-lg">EN</button>
+                <button onclick="setLang('he')" id="btn-he" class="px-3 py-1 text-[10px] font-bold rounded-md transition-all text-slate-400">עב</button>
+            </div>
+            <div id="clock" class="hidden md:block text-xs font-bold mono text-slate-400">00:00:00</div>
         </div>
     </header>
 
     <div class="flex flex-1 overflow-hidden">
-        <aside class="w-80 bg-slate-900 border-r border-white/5 flex flex-col">
-            <div id="rankings-list" class="flex-1 overflow-y-auto p-2 space-y-2"></div>
+        
+        <!-- Sidebar Watchlist -->
+        <aside class="w-80 bg-slate-950 border-r border-white/5 flex flex-col shrink-0 overflow-y-auto" id="rankings-list">
+            <!-- Items injected by JS -->
         </aside>
+
+        <!-- Main Dashboard Area -->
         <main class="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto">
-            <div class="glass p-6 rounded-3xl flex justify-between items-center">
-                <div>
-                    <h2 id="v-symbol" class="text-4xl font-black italic tracking-tighter">---</h2>
-                    <div id="v-name" class="text-slate-500 text-xs font-bold uppercase">Select Asset</div>
+            
+            <!-- Quick Summary Header -->
+            <div class="glass p-6 rounded-3xl flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-6">
+                    <div>
+                        <h2 id="v-symbol" class="text-5xl font-black italic tracking-tighter">---</h2>
+                        <div id="v-name" class="text-slate-500 text-xs font-bold uppercase">Select Asset</div>
+                    </div>
+                    <div class="text-center px-6 border-l border-white/5">
+                        <div class="text-[10px] text-slate-500 uppercase font-bold" id="ui-price-label">Market Price</div>
+                        <div id="v-price" class="text-2xl font-bold mono">---</div>
+                    </div>
                 </div>
-                <div class="text-right">
-                    <div id="v-price" class="text-3xl font-bold mono">---</div>
-                    <div id="v-change" class="text-sm font-bold">---</div>
+                <div class="flex items-center gap-4">
+                    <div class="text-right">
+                        <div class="text-[10px] text-slate-500 uppercase font-bold" id="ui-score-label">AI Health Score</div>
+                        <div id="v-score" class="text-4xl font-black text-blue-500">--</div>
+                    </div>
                 </div>
             </div>
-            <div class="glass rounded-3xl p-1 h-[450px] relative overflow-hidden">
-                <div id="chart-container" class="w-full h-full"></div>
+
+            <!-- View Switcher Tabs -->
+            <div class="flex gap-2 bg-slate-900/50 p-1 rounded-xl self-start">
+                <button onclick="switchChartView('interactive')" id="tab-interactive" class="tab-btn tab-active">Interactive Graph</button>
+                <button onclick="switchChartView('static')" id="tab-static" class="tab-btn text-slate-400">Institutional Analysis</button>
             </div>
+
+            <!-- Chart Container -->
+            <div class="glass rounded-[2rem] p-1 min-h-[500px] relative overflow-hidden shadow-2xl bg-slate-900/40">
+                <!-- Interactive Chart (JS) -->
+                <div id="interactive-chart" class="w-full h-[500px]"></div>
+                
+                <!-- Static Chart (PNG from Python) -->
+                <div id="static-chart" class="hidden w-full h-full flex items-center justify-center p-4">
+                    <img id="v-chart-img" class="max-w-full max-h-full rounded-xl shadow-2xl border border-white/5" src="" alt="Institutional Analysis">
+                </div>
+            </div>
+
+            <!-- Signals Area -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass p-6 rounded-3xl">
+                    <h4 class="text-[10px] text-slate-500 uppercase font-bold mb-4 tracking-widest" id="ui-signals-label">Intelligence Signals</h4>
+                    <div id="v-signals" class="flex flex-wrap gap-2"></div>
+                </div>
+                <div class="glass p-6 rounded-3xl border-l-4 border-blue-500">
+                    <p id="ui-disclaimer" class="text-[10px] text-slate-500 leading-relaxed italic">
+                        Technical analysis performed by the Python Quantitative Engine. Interactive view provides live price action, while the Institutional view displays Candlesticks and Volume.
+                    </p>
+                </div>
+            </div>
+
         </main>
     </div>
 
     <script>
         const i18n = {
-            en: { dir: "ltr", lang: "en" },
-            he: { dir: "rtl", lang: "he" }
+            en: { price: "Market Price", score: "AI Health Score", signals: "Intelligence Signals", interactive: "Interactive Graph", static: "Institutional Analysis", dir: "ltr" },
+            he: { price: "מחיר שוק", score: "ציון בריאות AI", signals: "איתותי מודיעין", interactive: "גרף אינטראקטיבי", static: "אנליזה מוסדית", dir: "rtl" }
         };
-        let currentLang = 'en', chart, candleSeries, currentRankings = [];
+
+        let currentLang = 'en', chart, candleSeries, currentRankings = [], activeSymbol = '';
 
         async function init() {
-            const res = await fetch('data/market_rankings.json?v=' + Date.now());
-            currentRankings = await res.json();
-            renderWatchlist();
-            if(currentRankings.length) loadStock(currentRankings[0]);
-            setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString(), 1000);
+            try {
+                const res = await fetch('data/market_rankings.json?v=' + Date.now());
+                currentRankings = await res.json();
+                renderWatchlist();
+                if(currentRankings.length) loadStock(currentRankings[0]);
+                
+                setInterval(() => {
+                    document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+                }, 1000);
+            } catch (e) {
+                console.error("Sync in progress...");
+            }
         }
 
         function setLang(lang) {
             currentLang = lang;
-            document.documentElement.dir = i18n[lang].dir;
-            document.getElementById('btn-en').className = lang === 'en' ? "px-3 py-1 text-[10px] font-bold rounded-full bg-blue-600 text-white" : "px-3 py-1 text-[10px] font-bold rounded-full text-slate-400";
-            document.getElementById('btn-he').className = lang === 'he' ? "px-3 py-1 text-[10px] font-bold rounded-full bg-blue-600 text-white" : "px-3 py-1 text-[10px] font-bold rounded-full text-slate-400";
+            const data = i18n[lang];
+            document.documentElement.dir = data.dir;
+            document.getElementById('ui-price-label').innerText = data.price;
+            document.getElementById('ui-score-label').innerText = data.score;
+            document.getElementById('ui-signals-label').innerText = data.signals;
+            document.getElementById('tab-interactive').innerText = data.interactive;
+            document.getElementById('tab-static').innerText = data.static;
+            
+            document.getElementById('btn-en').className = lang === 'en' ? "px-3 py-1 text-[10px] font-bold rounded-md transition-all bg-blue-600 text-white shadow-lg" : "px-3 py-1 text-[10px] font-bold rounded-md transition-all text-slate-400";
+            document.getElementById('btn-he').className = lang === 'he' ? "px-3 py-1 text-[10px] font-bold rounded-md transition-all bg-blue-600 text-white shadow-lg" : "px-3 py-1 text-[10px] font-bold rounded-md transition-all text-slate-400";
+            
             renderWatchlist();
         }
 
         function renderWatchlist() {
             const list = document.getElementById('rankings-list');
-            list.innerHTML = currentRankings.map(s => `
-                <div onclick="loadStockByName('${s.symbol}')" class="p-4 glass rounded-2xl flex justify-between items-center cursor-pointer hover:bg-white/5 transition">
-                    <div><b class="text-white">${s.symbol}</b><div class="text-[9px] text-slate-500 uppercase">${s.name}</div></div>
-                    <div class="text-right"><div class="text-xs font-bold mono">${s.score}</div><div class="text-[9px] ${s.change >= 0 ? 'text-emerald-500' : 'text-rose-500'} font-bold">${s.change.toFixed(2)}%</div></div>
+            list.innerHTML = currentRankings.map(s => {
+                const isActive = s.symbol.toLowerCase() === activeSymbol.toLowerCase();
+                return `
+                <div onclick="loadStockByName('${s.symbol}')" class="p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition flex justify-between items-center ${isActive ? 'active-stock' : ''}">
+                    <div>
+                        <b class="text-white text-lg">${s.symbol}</b>
+                        <div class="text-[9px] text-slate-500 uppercase font-bold">${s.name}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs font-bold mono text-blue-400">${s.score}</div>
+                        <div class="text-[9px] ${s.change >= 0 ? 'text-emerald-500' : 'text-rose-500'} font-black">${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}%</div>
+                    </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
-        async function loadStockByName(sym) {
-            const s = currentRankings.find(x => x.symbol === sym);
-            loadStock(s);
+        function loadStockByName(sym) {
+            const stock = currentRankings.find(x => x.symbol === sym);
+            loadStock(stock);
         }
 
         async function loadStock(s) {
+            activeSymbol = s.symbol;
+            renderWatchlist();
+
             document.getElementById('v-symbol').innerText = s.symbol;
             document.getElementById('v-name').innerText = s.name;
             document.getElementById('v-price').innerText = `$${s.price.toFixed(2)}`;
-            document.getElementById('v-change').innerText = `${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}%`;
-            document.getElementById('v-change').className = `text-sm font-bold ${s.change >= 0 ? 'text-emerald-500' : 'text-rose-500'}`;
+            document.getElementById('v-score').innerText = s.score;
+            
+            // Update Image (Static PNG from Python)
+            const img = document.getElementById('v-chart-img');
+            img.src = `charts/${s.symbol.toLowerCase()}.png?v=${Date.now()}`;
 
+            // Update Signals
+            const signals = currentLang === 'en' ? s.signals.en : s.signals.he;
+            document.getElementById('v-signals').innerHTML = signals.map(sig => 
+                `<span class="bg-blue-600/20 text-blue-400 text-[10px] px-2 py-1 rounded-lg border border-blue-500/20 font-bold">${sig}</span>`
+            ).join('');
+
+            // Load Interactive JSON Data
             const res = await fetch(`data/${s.symbol.toLowerCase()}_daily.json?v=` + Date.now());
             const detail = await res.json();
-            renderChart(detail.history);
+            renderInteractiveChart(detail.history);
         }
 
-        function renderChart(data) {
-            document.getElementById('chart-container').innerHTML = '';
-            chart = LightweightCharts.createChart(document.getElementById('chart-container'), {
+        function renderInteractiveChart(data) {
+            const container = document.getElementById('interactive-chart');
+            container.innerHTML = '';
+            chart = LightweightCharts.createChart(container, {
                 layout: { background: { type: 'solid', color: 'transparent' }, textColor: '#64748b' },
                 grid: { vertLines: { color: '#1e293b' }, horzLines: { color: '#1e293b' } },
                 timeScale: { borderColor: '#1e293b' },
@@ -110,6 +228,30 @@
             chart.timeScale().fitContent();
         }
 
+        function switchChartView(view) {
+            const interactive = document.getElementById('interactive-chart');
+            const staticChart = document.getElementById('static-chart');
+            const btnInt = document.getElementById('tab-interactive');
+            const btnStat = document.getElementById('tab-static');
+
+            if(view === 'interactive') {
+                interactive.classList.remove('hidden');
+                staticChart.classList.add('hidden');
+                btnInt.classList.add('tab-active');
+                btnInt.classList.remove('text-slate-400');
+                btnStat.classList.remove('tab-active');
+                btnStat.classList.add('text-slate-400');
+            } else {
+                interactive.classList.add('hidden');
+                staticChart.classList.remove('hidden');
+                btnStat.classList.add('tab-active');
+                btnStat.classList.remove('text-slate-400');
+                btnInt.classList.remove('tab-active');
+                btnInt.classList.add('text-slate-400');
+            }
+        }
+
+        window.onresize = () => chart && chart.resize(document.getElementById('interactive-chart').clientWidth, 500);
         init();
     </script>
 </body>

@@ -2,19 +2,21 @@
 "meta": {
 "symbol": "MSFT",
 "name": "Microsoft Corporation",
-"price": 386.8900146484375,
-"change": 0.6294414180692288,
-"score": 30,
+"price": 385.8550109863281,
+"change": 0.36023870815084524,
+"score": 45,
 "signals": {
 "en": [
-"\ud83d\udcc9 Downtrend"
+"\ud83d\udcc9 Downtrend",
+"\ud83d\udfe2 Oversold"
 ],
 "he": [
-"\ud83d\udcc9 \u05de\u05d2\u05de\u05ea \u05d9\u05e8\u05d9\u05d3\u05d4"
+"\ud83d\udcc9 \u05de\u05d2\u05de\u05ea \u05d9\u05e8\u05d9\u05d3\u05d4",
+"\ud83d\udfe2 \u05de\u05db\u05d9\u05e8\u05ea \u05d9\u05ea\u05e8"
 ]
 },
-"rsi": 35.276106622445724,
-"updated": "2026-02-24 16:14"
+"rsi": 34.421341638429354,
+"updated": "2026-02-24 17:19"
 },
 "history": [
 {
@@ -100662,10 +100664,10 @@
 "Open": 384.1400146484375,
 "High": 389.3599853515625,
 "Low": 381.739990234375,
-"Close": 386.8900146484375,
-"SMA200": 485.36366256713865,
-"SMA50": 449.75801330566406,
-"Volume": 12696459
+"Close": 385.8550109863281,
+"SMA200": 485.3584875488281,
+"SMA50": 449.73731323242185,
+"Volume": 15655395
 }
 ]
 }

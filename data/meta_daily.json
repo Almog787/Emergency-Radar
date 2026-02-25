@@ -2,21 +2,19 @@
 "meta": {
 "symbol": "META",
 "name": "Meta Platforms, Inc.",
-"price": 639.2999877929688,
-"change": 0.3216928666879168,
-"score": 45,
+"price": 649.8375244140625,
+"change": 1.6482929488974478,
+"score": 30,
 "signals": {
 "en": [
-"\ud83d\udcc9 Downtrend",
-"\ud83d\udfe2 Oversold"
+"\ud83d\udcc9 Downtrend"
 ],
 "he": [
-"\ud83d\udcc9 \u05de\u05d2\u05de\u05ea \u05d9\u05e8\u05d9\u05d3\u05d4",
-"\ud83d\udfe2 \u05de\u05db\u05d9\u05e8\u05ea \u05d9\u05ea\u05e8"
+"\ud83d\udcc9 \u05de\u05d2\u05de\u05ea \u05d9\u05e8\u05d9\u05d3\u05d4"
 ]
 },
-"rsi": 28.733747893696318,
-"updated": "2026-02-25 14:08"
+"rsi": 41.37489733265913,
+"updated": "2026-02-25 15:10"
 },
 "history": [
 {
@@ -34628,6 +34626,16 @@
 "SMA200": 689.9230349731446,
 "SMA50": 656.387060546875,
 "Volume": 10117900
+},
+{
+"Date": "2026-02-25 00:00",
+"Open": 642.5050048828125,
+"High": 651.6099853515625,
+"Low": 642.1500244140625,
+"Close": 649.8375244140625,
+"SMA200": 690.1889196777344,
+"SMA50": 656.3402490234375,
+"Volume": 1763825
 }
 ]
 }

@@ -1,28 +1,9 @@
 [
   {
-    "symbol": "GOOGL",
-    "name": "Alphabet Inc.",
-    "price": 306.510009765625,
-    "change": -0.28303568981957117,
-    "score": 85,
-    "signals": {
-      "en": [
-        "\ud83d\udcc8 Uptrend",
-        "\ud83d\udfe2 Oversold"
-      ],
-      "he": [
-        "\ud83d\udcc8 \u05de\u05d2\u05de\u05ea \u05e2\u05dc\u05d9\u05d9\u05d4",
-        "\ud83d\udfe2 \u05de\u05db\u05d9\u05e8\u05ea \u05d9\u05ea\u05e8"
-      ]
-    },
-    "rsi": 33.69893555745854,
-    "updated": "2026-02-27 14:43"
-  },
-  {
     "symbol": "NVDA",
     "name": "NVIDIA Corporation",
-    "price": 179.93499755859375,
-    "change": -2.679972874364186,
+    "price": 181.1663055419922,
+    "change": -2.01400500835565,
     "score": 70,
     "signals": {
       "en": [
@@ -32,14 +13,14 @@
         "\ud83d\udcc8 \u05de\u05d2\u05de\u05ea \u05e2\u05dc\u05d9\u05d9\u05d4"
       ]
     },
-    "rsi": 43.6945698051803,
-    "updated": "2026-02-27 14:43"
+    "rsi": 44.96997883516703,
+    "updated": "2026-02-27 15:25"
   },
   {
     "symbol": "AAPL",
     "name": "Apple Inc.",
-    "price": 269.1300048828125,
-    "change": -1.399526343058484,
+    "price": 269.31500244140625,
+    "change": -1.3317492592262141,
     "score": 70,
     "signals": {
       "en": [
@@ -49,14 +30,31 @@
         "\ud83d\udcc8 \u05de\u05d2\u05de\u05ea \u05e2\u05dc\u05d9\u05d9\u05d4"
       ]
     },
-    "rsi": 42.316518679353145,
-    "updated": "2026-02-27 14:43"
+    "rsi": 42.45476934961859,
+    "updated": "2026-02-27 15:25"
+  },
+  {
+    "symbol": "GOOGL",
+    "name": "Alphabet Inc.",
+    "price": 308.2900085449219,
+    "change": 0.29605167794057086,
+    "score": 70,
+    "signals": {
+      "en": [
+        "\ud83d\udcc8 Uptrend"
+      ],
+      "he": [
+        "\ud83d\udcc8 \u05de\u05d2\u05de\u05ea \u05e2\u05dc\u05d9\u05d9\u05d4"
+      ]
+    },
+    "rsi": 35.4851890329668,
+    "updated": "2026-02-27 15:25"
   },
   {
     "symbol": "TSLA",
     "name": "Tesla, Inc.",
-    "price": 402.2300109863281,
-    "change": -1.554157275105392,
+    "price": 406.0799865722656,
+    "change": -0.6118752954527851,
     "score": 70,
     "signals": {
       "en": [
@@ -66,14 +64,14 @@
         "\ud83d\udcc8 \u05de\u05d2\u05de\u05ea \u05e2\u05dc\u05d9\u05d9\u05d4"
       ]
     },
-    "rsi": 44.549487288735364,
-    "updated": "2026-02-27 14:43"
+    "rsi": 46.75943965733065,
+    "updated": "2026-02-27 15:25"
   },
   {
     "symbol": "BRK-B",
     "name": "Berkshire Hathaway Inc.",
-    "price": 502.7699890136719,
-    "change": 0.019888909874643406,
+    "price": 502.364990234375,
+    "change": -0.060680602624255446,
     "score": 70,
     "signals": {
       "en": [
@@ -83,14 +81,14 @@
         "\ud83d\udcc8 \u05de\u05d2\u05de\u05ea \u05e2\u05dc\u05d9\u05d9\u05d4"
       ]
     },
-    "rsi": 43.72641908607265,
-    "updated": "2026-02-27 14:43"
+    "rsi": 43.281318816651286,
+    "updated": "2026-02-27 15:25"
   },
   {
     "symbol": "LLY",
     "name": "Eli Lilly and Company",
-    "price": 1024.1700439453125,
-    "change": 0.21037008796056753,
+    "price": 1022.9400024414062,
+    "change": 0.0900161339871014,
     "score": 70,
     "signals": {
       "en": [
@@ -100,65 +98,31 @@
         "\ud83d\udcc8 \u05de\u05d2\u05de\u05ea \u05e2\u05dc\u05d9\u05d9\u05d4"
       ]
     },
-    "rsi": 41.642003921502024,
-    "updated": "2026-02-27 14:43"
-  },
-  {
-    "symbol": "MSFT",
-    "name": "Microsoft Corporation",
-    "price": 391.6000061035156,
-    "change": -2.5191663562769984,
-    "score": 30,
-    "signals": {
-      "en": [
-        "\ud83d\udcc9 Downtrend"
-      ],
-      "he": [
-        "\ud83d\udcc9 \u05de\u05d2\u05de\u05ea \u05d9\u05e8\u05d9\u05d3\u05d4"
-      ]
-    },
-    "rsi": 44.128225050572745,
-    "updated": "2026-02-27 14:43"
-  },
-  {
-    "symbol": "AMZN",
-    "name": "Amazon.com, Inc.",
-    "price": 205.74000549316406,
-    "change": -1.048476671305998,
-    "score": 30,
-    "signals": {
-      "en": [
-        "\ud83d\udcc9 Downtrend"
-      ],
-      "he": [
-        "\ud83d\udcc9 \u05de\u05d2\u05de\u05ea \u05d9\u05e8\u05d9\u05d3\u05d4"
-      ]
-    },
-    "rsi": 43.967332674769494,
-    "updated": "2026-02-27 14:43"
-  },
-  {
-    "symbol": "META",
-    "name": "Meta Platforms, Inc.",
-    "price": 640.5700073242188,
-    "change": -2.5022453535024356,
-    "score": 30,
-    "signals": {
-      "en": [
-        "\ud83d\udcc9 Downtrend"
-      ],
-      "he": [
-        "\ud83d\udcc9 \u05de\u05d2\u05de\u05ea \u05d9\u05e8\u05d9\u05d3\u05d4"
-      ]
-    },
-    "rsi": 41.62187063811712,
-    "updated": "2026-02-27 14:43"
+    "rsi": 41.26751122534711,
+    "updated": "2026-02-27 15:25"
   },
   {
     "symbol": "AVGO",
     "name": "Broadcom Inc.",
-    "price": 312.385009765625,
-    "change": -2.895555513815631,
+    "price": 318.2349853515625,
+    "change": -1.0770987640618486,
+    "score": 70,
+    "signals": {
+      "en": [
+        "\ud83d\udcc8 Uptrend"
+      ],
+      "he": [
+        "\ud83d\udcc8 \u05de\u05d2\u05de\u05ea \u05e2\u05dc\u05d9\u05d9\u05d4"
+      ]
+    },
+    "rsi": 39.89260767554244,
+    "updated": "2026-02-27 15:25"
+  },
+  {
+    "symbol": "MSFT",
+    "name": "Microsoft Corporation",
+    "price": 394.5199890136719,
+    "change": -1.7922961727453537,
     "score": 30,
     "signals": {
       "en": [
@@ -168,7 +132,41 @@
         "\ud83d\udcc9 \u05de\u05d2\u05de\u05ea \u05d9\u05e8\u05d9\u05d3\u05d4"
       ]
     },
-    "rsi": 36.919540777429035,
-    "updated": "2026-02-27 14:43"
+    "rsi": 45.954969495938144,
+    "updated": "2026-02-27 15:25"
+  },
+  {
+    "symbol": "AMZN",
+    "name": "Amazon.com, Inc.",
+    "price": 208.50990295410156,
+    "change": 0.28371719428206377,
+    "score": 30,
+    "signals": {
+      "en": [
+        "\ud83d\udcc9 Downtrend"
+      ],
+      "he": [
+        "\ud83d\udcc9 \u05de\u05d2\u05de\u05ea \u05d9\u05e8\u05d9\u05d3\u05d4"
+      ]
+    },
+    "rsi": 47.511536398778446,
+    "updated": "2026-02-27 15:25"
+  },
+  {
+    "symbol": "META",
+    "name": "Meta Platforms, Inc.",
+    "price": 647.4199829101562,
+    "change": -1.4596469936416643,
+    "score": 30,
+    "signals": {
+      "en": [
+        "\ud83d\udcc9 Downtrend"
+      ],
+      "he": [
+        "\ud83d\udcc9 \u05de\u05d2\u05de\u05ea \u05d9\u05e8\u05d9\u05d3\u05d4"
+      ]
+    },
+    "rsi": 44.041739316199696,
+    "updated": "2026-02-27 15:25"
   }
 ]

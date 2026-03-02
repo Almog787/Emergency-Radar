@@ -1,6 +1,6 @@
 # 🧠 Institutional AI Market Radar | מודיעין שוק מבוסס AI
 
-![Last Update](https://img.shields.io/badge/Last_Update-2026-03-02--13:-59--UTC-blue?style=for-the-badge)
+![Last Update](https://img.shields.io/badge/Last_Update-2026-03-02--14:-50--UTC-blue?style=for-the-badge)
 ![Status](https://img.shields.io/badge/System-Operational-emerald?style=for-the-badge)
 
 ## 🚀 [Open Interactive Terminal | כניסה לטרמינל האינטראקטיבי](https://almog787.github.io/Stock-information-/)
@@ -11,22 +11,22 @@
 *גרפים עבור כל המניות במעקב (100 ימי מסחר אחרונים)*
 
 
-### 1. NVDA (AI Score: 70)
+### 1. GOOGL (AI Score: 85)
+**Signals:** `📈 Uptrend, 🟢 Oversold` | **איתותים:** `📈 מגמת עלייה, 🟢 מכירת יתר`
+
+![GOOGL Chart](charts/googl.png)
+
+---
+### 2. NVDA (AI Score: 70)
 **Signals:** `📈 Uptrend` | **איתותים:** `📈 מגמת עלייה`
 
 ![NVDA Chart](charts/nvda.png)
 
 ---
-### 2. AAPL (AI Score: 70)
+### 3. AAPL (AI Score: 70)
 **Signals:** `📈 Uptrend` | **איתותים:** `📈 מגמת עלייה`
 
 ![AAPL Chart](charts/aapl.png)
-
----
-### 3. GOOGL (AI Score: 70)
-**Signals:** `📈 Uptrend` | **איתותים:** `📈 מגמת עלייה`
-
-![GOOGL Chart](charts/googl.png)
 
 ---
 ### 4. TSLA (AI Score: 70)
@@ -35,56 +35,56 @@
 ![TSLA Chart](charts/tsla.png)
 
 ---
-### 5. BRK-B (AI Score: 70)
-**Signals:** `📈 Uptrend` | **איתותים:** `📈 מגמת עלייה`
-
-![BRK-B Chart](charts/brk-b.png)
-
----
-### 6. LLY (AI Score: 70)
+### 5. LLY (AI Score: 70)
 **Signals:** `📈 Uptrend` | **איתותים:** `📈 מגמת עלייה`
 
 ![LLY Chart](charts/lly.png)
 
 ---
-### 7. AVGO (AI Score: 70)
-**Signals:** `📈 Uptrend` | **איתותים:** `📈 מגמת עלייה`
+### 6. AVGO (AI Score: 45)
+**Signals:** `📉 Downtrend, 🟢 Oversold` | **איתותים:** `📉 מגמת ירידה, 🟢 מכירת יתר`
 
 ![AVGO Chart](charts/avgo.png)
 
 ---
-### 8. MSFT (AI Score: 30)
+### 7. MSFT (AI Score: 30)
 **Signals:** `📉 Downtrend` | **איתותים:** `📉 מגמת ירידה`
 
 ![MSFT Chart](charts/msft.png)
 
 ---
-### 9. AMZN (AI Score: 30)
+### 8. AMZN (AI Score: 30)
 **Signals:** `📉 Downtrend` | **איתותים:** `📉 מגמת ירידה`
 
 ![AMZN Chart](charts/amzn.png)
 
 ---
-### 10. META (AI Score: 30)
+### 9. META (AI Score: 30)
 **Signals:** `📉 Downtrend` | **איתותים:** `📉 מגמת ירידה`
 
 ![META Chart](charts/meta.png)
+
+---
+### 10. BRK-B (AI Score: 30)
+**Signals:** `📉 Downtrend` | **איתותים:** `📉 מגמת ירידה`
+
+![BRK-B Chart](charts/brk-b.png)
 
 ---
 
 ## 📋 Rankings Summary Table | טבלת דירוג מרוכזת
 | Rank | Symbol | Price | Change | AI Score | RSI |
 | :--- | :--- | :---: | :---: | :---: | :---: |
-| 1 | **NVDA** | $177.19 | 🔴 -4.16% | **70** | 41.1 |
-| 2 | **AAPL** | $264.18 | 🔴 -3.21% | **70** | 38.9 |
-| 3 | **GOOGL** | $311.76 | 🟢 1.42% | **70** | 39.7 |
-| 4 | **TSLA** | $402.51 | 🔴 -1.49% | **70** | 44.7 |
-| 5 | **BRK-B** | $504.95 | 🟢 0.45% | **70** | 46.5 |
-| 6 | **LLY** | $1051.99 | 🟢 2.93% | **70** | 49.0 |
-| 7 | **AVGO** | $319.55 | 🔴 -0.67% | **70** | 40.6 |
-| 8 | **MSFT** | $392.74 | 🔴 -2.24% | **30** | 44.8 |
-| 9 | **AMZN** | $210.00 | 🟢 1.00% | **30** | 49.6 |
-| 10 | **META** | $648.18 | 🔴 -1.34% | **30** | 44.3 |
+| 1 | **GOOGL** | $305.83 | 🔴 -1.90% | **85** | 34.1 |
+| 2 | **NVDA** | $180.03 | 🟢 1.60% | **70** | 38.7 |
+| 3 | **AAPL** | $263.05 | 🔴 -0.43% | **70** | 40.3 |
+| 4 | **TSLA** | $397.80 | 🔴 -1.17% | **70** | 37.7 |
+| 5 | **LLY** | $1055.44 | 🟢 0.33% | **70** | 53.0 |
+| 6 | **AVGO** | $316.17 | 🔴 -1.06% | **45** | 28.2 |
+| 7 | **MSFT** | $396.28 | 🟢 0.90% | **30** | 37.1 |
+| 8 | **AMZN** | $207.43 | 🔴 -1.22% | **30** | 48.3 |
+| 9 | **META** | $648.96 | 🟢 0.12% | **30** | 36.2 |
+| 10 | **BRK-B** | $483.04 | 🔴 -4.34% | **30** | 36.7 |
 
 ---
 ## 📘 Legend & Definitions | מקרא והסברים
@@ -99,17 +99,17 @@
 ## 🗄️ Database Audit | ביקורת נתונים
 | Ticker | Records | Time Range | Status |
 | :--- | :---: | :--- | :---: |
-| NVDA | 6817 | `1999-01-22` - `2026-02-27` | ✅ Verified |
-| AAPL | 11394 | `1980-12-12` - `2026-02-27` | ✅ Verified |
-| GOOGL | 5416 | `2004-08-19` - `2026-02-27` | ✅ Verified |
-| TSLA | 3941 | `2010-06-29` - `2026-02-27` | ✅ Verified |
-| BRK-B | 7499 | `1996-05-09` - `2026-02-27` | ✅ Verified |
-| LLY | 13548 | `1972-06-01` - `2026-02-27` | ✅ Verified |
-| AVGO | 4166 | `2009-08-06` - `2026-02-27` | ✅ Verified |
-| MSFT | 10068 | `1986-03-13` - `2026-02-27` | ✅ Verified |
-| AMZN | 7242 | `1997-05-15` - `2026-02-27` | ✅ Verified |
-| META | 3464 | `2012-05-18` - `2026-02-27` | ✅ Verified |
+| GOOGL | 5417 | `2004-08-19` - `2026-03-02` | ✅ Verified |
+| NVDA | 6818 | `1999-01-22` - `2026-03-02` | ✅ Verified |
+| AAPL | 11395 | `1980-12-12` - `2026-03-02` | ✅ Verified |
+| TSLA | 3942 | `2010-06-29` - `2026-03-02` | ✅ Verified |
+| LLY | 13549 | `1972-06-01` - `2026-03-02` | ✅ Verified |
+| AVGO | 4167 | `2009-08-06` - `2026-03-02` | ✅ Verified |
+| MSFT | 10069 | `1986-03-13` - `2026-03-02` | ✅ Verified |
+| AMZN | 7243 | `1997-05-15` - `2026-03-02` | ✅ Verified |
+| META | 3465 | `2012-05-18` - `2026-03-02` | ✅ Verified |
+| BRK-B | 7500 | `1996-05-09` - `2026-03-02` | ✅ Verified |
 
 
 ---
-*Auto-generated by GitHub Actions using Python & yfinance. Last sync: 2026-03-02 13:59 UTC*
+*Auto-generated by GitHub Actions using Python & yfinance. Last sync: 2026-03-02 14:50 UTC*

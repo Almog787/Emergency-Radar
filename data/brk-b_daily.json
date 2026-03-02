@@ -2,19 +2,21 @@
 "meta": {
 "symbol": "BRK-B",
 "name": "Berkshire Hathaway Inc.",
-"price": 481.32000732421875,
-"change": -4.679672108439145,
-"score": 30,
+"price": 480.1700134277344,
+"change": -4.907416215515802,
+"score": 45,
 "signals": {
 "en": [
-"\ud83d\udcc9 Downtrend"
+"\ud83d\udcc9 Downtrend",
+"\ud83d\udfe2 Oversold"
 ],
 "he": [
-"\ud83d\udcc9 \u05de\u05d2\u05de\u05ea \u05d9\u05e8\u05d9\u05d3\u05d4"
+"\ud83d\udcc9 \u05de\u05d2\u05de\u05ea \u05d9\u05e8\u05d9\u05d3\u05d4",
+"\ud83d\udfe2 \u05de\u05db\u05d9\u05e8\u05ea \u05d9\u05ea\u05e8"
 ]
 },
-"rsi": 35.601418060012435,
-"updated": "2026-03-02 20:55"
+"rsi": 34.91158914511033,
+"updated": "2026-03-02 21:29"
 },
 "history": [
 {
@@ -75012,10 +75014,10 @@
 "Open": 495.2250061035156,
 "High": 495.75,
 "Low": 477.9100036621094,
-"Close": 481.32000732421875,
-"SMA200": 492.30944931030274,
-"SMA50": 495.11319946289063,
-"Volume": 8644671
+"Close": 480.1700134277344,
+"SMA200": 492.3036993408203,
+"SMA50": 495.09019958496094,
+"Volume": 9342807
 }
 ]
 }

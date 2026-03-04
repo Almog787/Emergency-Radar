@@ -2,21 +2,21 @@
 "meta": {
 "symbol": "AVGO",
 "name": "Broadcom Inc.",
-"price": 315.0,
-"change": 0.3696162616763723,
-"score": 45,
+"price": 321.5400085449219,
+"change": 2.453483398190319,
+"score": 85,
 "signals": {
 "en": [
-"\ud83d\udcc9 Downtrend",
+"\ud83d\udcc8 Uptrend",
 "\ud83d\udfe2 Oversold"
 ],
 "he": [
-"\ud83d\udcc9 \u05de\u05d2\u05de\u05ea \u05d9\u05e8\u05d9\u05d3\u05d4",
+"\ud83d\udcc8 \u05de\u05d2\u05de\u05ea \u05e2\u05dc\u05d9\u05d9\u05d4",
 "\ud83d\udfe2 \u05de\u05db\u05d9\u05e8\u05ea \u05d9\u05ea\u05e8"
 ]
 },
-"rsi": 27.379386896655816,
-"updated": "2026-03-04 14:37"
+"rsi": 34.37407721812288,
+"updated": "2026-03-04 15:23"
 },
 "history": [
 {
@@ -41702,12 +41702,12 @@
 {
 "Date": "2026-03-04 00:00",
 "Open": 316.1099853515625,
-"High": 317.5,
+"High": 321.67999267578125,
 "Low": 311.739990234375,
-"Close": 315.0,
-"SMA200": 318.93659690856936,
-"SMA50": 334.6272003173828,
-"Volume": 1704450
+"Close": 321.5400085449219,
+"SMA200": 318.9692969512939,
+"SMA50": 334.75800048828125,
+"Volume": 5065242
 }
 ]
 }
